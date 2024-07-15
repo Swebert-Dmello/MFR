@@ -1,0 +1,799 @@
+﻿@model Strides.Models.PDFCreator
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Index</title>
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    <style>
+        #preloader {
+            opacity: 1 !important;
+            background: #00965e !important;
+        }
+    </style>
+</head>
+<body>
+
+    @using (Html.BeginForm("SaveHTML", "PDFCreator", FormMethod.Post, new { @id = "PDFForm" }))
+    {
+        <style>
+            table.borderTable td, table.borderTable th {
+                border-style: solid;
+                padding-left: 5px;
+                border-width: 1px;
+            }
+
+            span {
+                font-weight: bold;
+            }
+
+            .outerBreak {
+                word-wrap: break-word;
+                word-break: break-all;
+                overflow-wrap: break-word;
+                white-space: pre-wrap;
+            }
+
+            .last {
+                position: fixed;
+                bottom: 130px;
+                left: 0px;
+                right: 0px;
+            }
+
+            td {
+                word-break: break-all;
+                word-break: break-word;
+                word-wrap: break-word;
+            }
+        </style>
+        <script>
+
+          var popupBlockerChecker = {
+                check: function (popup_window, urlAttemptingToOpen) {
+                    var _scope = this;
+                    if (popup_window) {
+                        if (/chrome/.test(navigator.userAgent.toLowerCase())) {
+                            setTimeout(function () {
+                                _scope._is_popup_blocked(_scope, popup_window, urlAttemptingToOpen);
+                            }, 200);
+                        } else {
+                            popup_window.onload = function () {
+                                _scope._is_popup_blocked(_scope, popup_window, urlAttemptingToOpen);
+                            };
+                        }
+                    } else {
+                        _scope._displayError(urlAttemptingToOpen);
+                    }
+                },
+                _is_popup_blocked: function (scope, popup_window, urlAttemptingToOpen) {
+                    if ((popup_window.innerHeight > 0) == false) { scope._displayError(urlAttemptingToOpen); }
+                },
+                _displayError: function (urlAttemptingToOpen) {
+                    // NOTE external dependency here of toastr. But you can notify the user however you want.
+                    toastr.error("Popup blocker is enabled! Please add this site to your exception list or turn off the blocker. " +
+                        "<a target='_blank' style='color: blue;' href='" + urlAttemptingToOpen + "'>Click here</a> to open the window.");
+                }
+            };
+
+
+
+
+            $(document).ready(function () {
+                var URL = '@Url.Action("SaveHTML", "PDFCreator")';
+                var MFR_NO = '@Session["MFR_NO"]';
+                var Status = '@Session["MFRStatus"]';
+                var fileName = '@Session["MFR_NEW_NAME"]';
+                var Mode = '@(Convert.ToBoolean(Session["ViewMode"])?"View":"Edit")';
+                var folderPath = '@Session["folderPath"]';
+                $.ajax({
+                    url: URL,
+                    type: "POST",
+                    cache: false,
+                    data: { 'htmlContent': JSON.stringify($('#PDFForm').html()) },
+                    beforeSend: function () {
+                        $('#preloader').fadeIn('slow');
+                    },
+
+                    success: function (data) {
+
+                       //var urlToOpen = "http://192.168.16.123/PHP_PDF/index_prod.php?Path=" + MFR_NO + "&FileName=" + (Status == "Complete" ? fileName + "_Final.pdf" : fileName+"_Draft.pdf&Mode="+Mode);
+                        var urlToOpen = "@System.Web.Configuration.WebConfigurationManager.AppSettings["CreatePDF"]" + MFR_NO + "&FileName=" + (Status == "Complete" ? fileName + "_Final.pdf" : fileName + "_Draft.pdf&Mode=" + Mode) + "&folderPath=" + folderPath + "&MFR_NEW_NAME=" + fileName;
+
+                       var popup = window.open(urlToOpen, '_self', {});
+                        //popupBlockerChecker.check(popup, urlToOpen);
+                    },
+                    complete: function () {
+
+                    },
+                    error: function (xhr) { // if error occured
+                        $('#preloader').fadeOut('slow');
+                    }
+                });
+
+            });
+        </script>
+        <headerDiv>
+            <header>
+                <table style="width:100%;font-size:11px;border-collapse:collapse;" class="borderTable pageBreakAuto">
+                    <tr>
+                        <td style="text-align: center;width: 65px;height:30px;border:1px solid black;">
+                            <img src="./logo_sm.png"
+                        </td>
+                        <td style="border:1px solid black;padding:0px">
+                            <div style="width:100%;border-collapse:collapse;text-align:left;display:table" class="">
+                                <div style="display:table-row"><div style="display:table-cell;padding-left:5px;border-bottom: 1px solid;border-right: 1px solid;font-size:14px;text-align:center;" colspan="3">MASTER FORMULA RECORD</div></div>
+                                <div style="display:table-row"><div style="display:table-cell;padding-left:5px;border-bottom: 1px solid;border-right: 1px solid;font-size:12px;" colspan="3">MFR Name : @Model.prodInfo.MFRName </div>@*<div style="display:table-cell;padding-left:5px;border-bottom: 1px solid;">Supersedes : 11</div>*@</div>
+                                <div style="display:table-row"><div style="display:table-cell;padding-left:5px;border-bottom: 1px solid;border-right: 1px solid;width:10%">MFR No. : @Model.prodInfo.prodCode.value</div><div style="display:table-cell;padding-left:5px;border-bottom: 1px solid;border-right: 1px solid;width:10%">Market / Customer : @Model.prodInfo.Customer</div><div style="display:table-cell;padding-left:5px;border-bottom: 1px solid;border-top: 1px solid;">Shelf life(In Months) : @Model.prodInfo.shelfLife.value</div></div>
+                                <div style="display:table-row"><div style="display:table-cell;padding-left:5px;border-right: 1px solid;;width:80%" colspan="2">Manufacturing Plant : @(Model.prodInfo.plantName.value == "NA" ? "" : Model.prodInfo.plantName.value)</div><div style="display:table-cell;padding-left:5px;">Batch Size : @Model.prodInfo.batchSize.value</div></div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </header>
+        </headerDiv>
+        <div style="font-size: 11px;">
+            @*<div style="width:100%;text-align:center">
+                    <span>MASTER FORMULA RECORD</span>
+                    <table style="width:100%" class="borderTable pageBreakAuto">
+                        <tr>
+                            <td style="text-align: left;width: 95px;">
+                                <img src="./logo_sm.png"
+                            </td>
+                            <td>
+                                <table style="width:100%;border-collapse:collapse;border:1px solid black;text-align:left" class="borderTable">
+                                    <tr><td>MFR NO & Name : @Model.prodInfo.prodCode.value @Model.prodInfo.prodName.value</td><td>Supersedes : 11</td></tr>
+                                    <tr><td>Market / Customer : US/PEPFAR</td><td>Shelf life(In Months) : @Model.prodInfo.shelfLife.value</td></tr>
+                                    <tr><td>Manufacturing Plant : 1002-STRIDES SHASUN LIMITED-Strides -R&D</td><td>Batch Size : @Model.prodInfo.batchSize.value</td></tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                    </table>
+                </div>*@
+            <div style="width:100%;text-align:left;padding-top:1%;">
+                <span>REASON FOR REVISION:</span>
+                <table style="width:100%;border-collapse:collapse;border:1px solid black;text-align:left" class="borderTable pageBreakAuto">
+                    <tr>
+                        <th style="width: 20%;">Revision No</th>
+                        <th style="width:60%;white-space:pre-line">Changes Incorporated</th>
+                        <th style="width: 20%;">Authorised*/Effective Date</th>
+                    </tr>
+
+                    @{
+                        if (Model.RevHistory != null)
+                        {
+                            if (Model.RevHistory.CH != null && Model.RevHistory.CH.Count > 0)
+                            {
+                                foreach (Strides.Models.ChangeHistory Rev in Model.RevHistory.CH.AsEnumerable().Reverse())
+                                {
+                                    <tr>
+                                        <td>@Rev.Number</td>
+                                        <td style="word-break:break-word;word-wrap:break-word;">@Html.Raw(Rev.Description.Replace("\n", "<br>"))</td>
+                                        <td>@Rev.Eff_Date1</td>
+                                    </tr>
+                                }
+                            }
+
+                            if (Model.RevHistory.PC != null && Model.RevHistory.PC.Count > 0)
+                            {
+                                foreach (Strides.Models.PendingChanges Rev in Model.RevHistory.PC)
+                                {
+                                    <tr>
+                                        <td>@Rev.Number</td>
+                                        <td style="word-break:break-word;word-wrap:break-word;">@Html.Raw(Rev.Description.Replace("\n", "<br>"))</td>
+                                        <td>@(Rev.Eff_Date1 != "" && Rev.Eff_Date1 != string.Empty && Rev.Eff_Date1 != null && Rev.Eff_Date1 == "NA" ? "Current Revision" : Rev.Eff_Date1)</td>
+                                    </tr>
+                                }
+                            }
+
+                            if (Model.RevHistory.PC.Count == 0 && Model.RevHistory.CH.Count == 0)
+                            {
+                                <tr>
+                                    <td>NA</td>
+                                    <td>NA</td>
+                                    <td>NA</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td>NA</td>
+                                <td>NA</td>
+                                <td>NA</td>
+                            </tr>
+                        }
+                    }
+
+
+                </table>
+            </div>
+            * Wherever MES is implemented consider authorised date.
+            <div style="font-size: 11px;page-break-after:always;padding-top:1%" class="pageBreakAuto">
+                <span>PRODUCT INFORMATION:</span>
+                <table style="width :100%;border-collapse:collapse;border:1px solid black;text-align:left;" class="pageBreakAuto">
+                    <tr>
+                        <td style="padding-left:5px;border:1px solid black;">Product Description</td>
+                        <td style="padding-left:5px;border:1px solid black;word-break:break-all;word-wrap:break-word">
+                            @Html.Raw(Model.prodInfo.prodDesc.value)
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding-left:5px;border:1px solid black;">
+                            Pharmacopoeial Reference
+                        </td>
+                        <td style="padding-left:5px;border:1px solid black;word-break:break-all;word-wrap:break-word">
+                            @Html.Raw(Model.prodInfo.phramaCo.value)
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding-left:5px;border:1px solid black;">
+                            Label Claim/Composition
+                            & Strength
+                        </td>
+                        <td style="padding-left:5px;border:1px solid black;word-break:break-all;word-wrap:break-word">
+                            @Html.Raw(Model.prodInfo.labelClaim.value)
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding-left:5px;border:1px solid black;">Storage Condition</td>
+                        <td style="padding-left:5px;border:1px solid black;word-break:break-all;word-wrap:break-word">
+                            @Html.Raw(Model.prodInfo.stageCond.value)
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding-left:5px;border:1px solid black;">Primary Packaging</td>
+                        <td style="padding-left:5px;border:1px solid black;word-break:break-all;word-wrap:break-word">
+                            @Html.Raw(Model.prodInfo.priPackage.value)
+                        </td>
+                    </tr>
+                </table>
+
+            </div>
+
+            <div style="page-break-after:always" class="outerTable pageBreakAuto">
+                <span>RAW MATERIAL INFORMATION:</span>
+                <table style="width:100%;border-collapse:collapse;border:1px solid black;text-align:left" class="borderTable pageBreakAuto">
+                    <tr>
+                        <th>S.No</th>
+                        <th>Ingredients</th>
+                        <th>Source</th>
+                        <th>Functional Category</th>
+                        <th>IID Listed</th>
+                    </tr>
+
+
+                    @{
+                        int i = 1;
+                        string strSource = "";
+                        List<Strides.Models.BOMItem> Boms = Model.bomList.Bitem.GroupBy(x => x.MaterialDescription).Select(x => x.FirstOrDefault()).ToList();
+
+                        foreach (Strides.Models.BOMItem item in Boms)
+                        {
+                            strSource = (item.Source != null && item.Source != "" && item.Source != string.Empty && item.Source != "NA" ? item.Source.Replace("||", "<br>") : "--");
+                            if (item.MaterialDescription != null && item.MaterialDescription != string.Empty)
+                            {
+                                if (item.MaterialDescription.ToLower().Contains("purified water"))
+                                {
+                                    strSource = "In-house";
+                                }
+                            }
+                            <tr>
+                                <td>@i</td>
+                                <td>@item.MaterialDescription</td>
+                                <td>@Html.Raw(strSource)</td>
+                                <td>@Html.Raw(item.FunctionalCategory != null && item.FunctionalCategory != "" && item.FunctionalCategory != string.Empty ? item.FunctionalCategory : "NA")</td>
+                                <td>@item.IIGListed</td>
+                            </tr>
+                            i = i + 1;
+                        }
+
+                    }
+
+                </table>
+            </div>
+            <div style="padding-top:1%;page-break-after:always" class="outerTable pageBreakAuto">
+                <span>BILL OF MATERIAL:</span>
+                <table style="width:100%;border-collapse:collapse;border:1px solid black;text-align:left" class="borderTable pageBreakAuto">
+                    <tr>
+                        <th style="width:3%">S.No</th>
+                        <th style="width:9%">Material Code</th>
+                        <th>Material Description</th>
+                        <th style="width:10%">
+                            Qty(Unit)/
+                            % Composition
+                        </th>
+                        <th style="width:10%">Qty/Batch</th>
+                        <!--<th>UOM</th>-->
+                        <th style="width:5%">Alternate Group</th>
+                        <th style="width:5%">Priority</th>
+                        <th style="width:5%">Priority Text</th>
+                    </tr>
+                    @{
+                        i = 1;
+                        foreach (Strides.Models.BOMItem item in Model.bomList.Bitem)
+                        {
+                            <tr>
+                                <td>@i</td>
+                                <td>@item.MaterialCode</td>
+                                <td>@item.MaterialDescription</td>
+                                <td>@(item.QTY_UNIT_VALUE == null || item.QTY_UNIT_VALUE == "" ? "--" : item.QTY_UNIT_VALUE)@item.QTY_UNIT_UOM</td>
+                                <td>@(item.QTY_BATCH_VALUE == null || item.QTY_BATCH_VALUE == "" ? "--" : item.QTY_BATCH_VALUE)@item.QTY_BATCH_UOM</td>
+                                <!--<td>@item.UOM</td>-->
+
+                                <td>@(item.AlternateMaterialGroupID == null || item.AlternateMaterialGroupID == "" ? "--" : item.AlternateMaterialGroupID)</td>
+                                <td>@(item.Priority == null || item.Priority == "" ? "--" : item.Priority)</td>
+                                <td>@(item.PriorityText == null || item.PriorityText == "" ? "--" : item.PriorityText)</td>
+                            </tr>
+                            i = i + 1;
+                        }
+                    }
+                </table>
+            </div>
+            <div style="padding-top:1%;page-break-inside:avoid" class="pageBreakAuto">
+                <div style="" class="pageBreakAuto">
+                    <table style="width:100%" class="borderTable pageBreakAuto">
+                        <tr>
+                            <td style="border:none;border-collapse:collapse">
+                                <span>CALCULATION:</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span style="word-wrap: break-word;word-break:break-all;overflow-wrap: break-word; font-weight:normal;font-size:11px;">@Html.Raw(Model.prodInfo.calc.value)</span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div style="padding-top:1%;page-break-inside:avoid" class="pageBreakAuto">
+                <span>REMARKS:</span>
+                <table style="width:100%" class="borderTable pageBreakAuto">
+                    <tr>
+                        <td> <span style="word-wrap: break-word;overflow-wrap: break-word; font-weight:normal;font-size:11px;">@Html.Raw(Model.prodInfo.remarks.value)</span></td>
+                    </tr>
+                </table>
+            </div>
+
+            <div style="padding-top:1%;page-break-inside:avoid">
+                <span>
+                    SPECIAL INSTRUCTIONS:<br />
+                    Before starting and during manufacturing operation, both production and IPQA personnel should ensure the following.
+                </span>
+                @{ if (@Model.prodInfo.splIinst.SIlist == null)
+                    {
+                        <div style="display:none;"></div>
+                    }
+                    else
+                    {
+                        <table style="width:100%;border-collapse:collapse;" class="borderTable pageBreakAuto">
+                            <tr><td style="width:5%;">Sl.No</td><td style="width:95%;">Instruction</td></tr>
+                            @{
+                                foreach (Strides.Models.SpecialInstruction spl in Model.prodInfo.splIinst.SIlist)
+                                {
+                                    <tr>
+                                        <td>@spl.Id</td>
+                                        <td style="word-break:break-all;word-wrap:break-word;">@Html.Raw(spl.Text)</td>
+                                    </tr>
+                                }
+                            }
+                        </table>
+
+                    }
+                }
+            </div>
+            <div style="padding-top:1%;page-break-inside:avoid" class="pageBreakAuto">
+                <span>PRECAUTIONS:</span>
+                <table style="width:100%" class="borderTable pageBreakAuto">
+                    <tr><td><div style="word-break:break-all;word-wrap:break-word">@Html.Raw(Model.prodInfo.preCaution.value)</div></td></tr>
+                </table>
+            </div>
+            <div style="padding-top:1%;page-break-inside:avoid" class="pageBreakAuto">
+                <span>PRODUCT SPECIFIC INSTRUCTIONS:</span>
+                <table style="width:100%" class="borderTable pageBreakAuto">
+                    <tr>
+                        <td><span style="word-wrap: break-word;overflow-wrap: break-word; font-weight:normal;font-size:11px;">@Html.Raw(Model.prodInfo.prodSpecific.value)</span></td>
+                    </tr>
+                </table>
+            </div>
+
+
+            <div style="padding-top:0%;page-break-inside:avoid" class="pageBreakAuto">
+                <span>EQUIPMENT INFORMATION:</span>
+                <table style="border:1px solid black;border-collapse:collapse;width:100%;text-align:left" class="borderTable pageBreakAuto">
+
+                    @{
+                        foreach (Strides.Models.Equipment EQ in Model.Eqps)
+                        {
+                            <tr><td>@EQ.Name</td></tr>
+                        }
+                    }
+
+                    <tr><td><b>Accessories :</b>@Html.Raw(Model.prodInfo.accessories.value)</td></tr>
+
+
+                    <tr><td><b>Utilities :</b>@Html.Raw(Model.prodInfo.utility.value)</td></tr>
+
+                </table>
+            </div>
+            <div style="padding-top:1%;page-break-after:always;page-break-inside:avoid" class="">
+                @{ if (@Model.prodInfo.cCtrlPoints.cPlist != null && @Model.prodInfo.cCtrlPoints.cPlist.Count > 0)
+                    { <span> CRITICAL CONTROL POINTS:</span>
+                        <div style="border:1px solid;">
+                            <table style="width:100%;border-collapse:collapse;" class="borderTable pageBreakAuto">
+                                <tr><td>Sl.No</td><td>Critical Process Steps</td><td>Parameter To Be Studied</td><td>Justification</td><td>Risk Factor</td></tr>
+                                @{
+                                    foreach (Strides.Models.CriticalControlPoint spl in Model.prodInfo.cCtrlPoints.cPlist)
+                                    {
+                                        <tr>
+                                            <td>@spl.Id</td>
+                                            <td style="word-break:break-all;word-wrap:break-word">@Html.Raw(spl.step)</td>
+                                            <td style="word-break:break-all;word-wrap:break-word">@Html.Raw(spl.parameter)</td>
+                                            <td style="word-break:break-all;word-wrap:break-word">@Html.Raw(spl.justification)</td>
+                                            <td style="word-break:break-all;word-wrap:break-word">@Html.Raw(spl.riskFactor)</td>
+
+                                        </tr>
+                                    }
+                                }
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <span> CRITICAL CONTROL POINTS: NA</span>
+                    }
+                }
+            </div>
+
+            <div style="padding-top:1%;">
+                <div style="">
+                    <table style="table-layout: fixed;width:100%;border-collapse:collapse;border:none !important;text-align:left;page-break-before:avoid;">
+                        <tr>
+                            <td style="page-break-before:avoid;" colspan="2">
+                                <span>MANUFACTURING PROCEDURE:</span>
+                            </td>
+                        </tr>
+                        @{
+                            foreach (Strides.Models.PDFOperation Operation in Model.ProcInfo.PDFOperation)
+                            {
+                                <tr>
+                                    <td style="text-align:left;font-weight:bold;padding-top:15px;border-bottom: 1px solid !important;border: none;page-break-before:avoid;page-break-inside:avoid" colspan="2">
+                                        @Operation.Operation
+                                    </td>
+
+                                </tr>
+                                foreach (Strides.Models.PDFProcedure Procedure in Operation.PDFProceure)
+                                {
+                                    <tr>
+                                        <td style="width:4.5%;padding:0px;border:none !important"></td>
+                                        <td style="font-weight:bold;width:95.5%;border:none!important;padding-top:5px">@Procedure.Procedure</td>
+                                    </tr>
+                                    foreach (Strides.Models.xProcess Proc in Procedure.processInfo)
+                                    {
+                                        <tr>
+                                            <td style="width:4.5%;border:1px solid">@Proc.PLM_STAGE_ID</td>
+                                            <td style="width:95.5%;border:1px solid;">
+                                                @{
+                                                    <span style="word-wrap: break-word;font-weight:normal;font-size:11px;"> @Html.Raw(Proc.textBx1)</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+
+                            }
+                        }
+                    </table>
+                </div>
+            </div>
+
+            <div style="padding-top:1%;page-break-after:always;page-break-inside:avoid" class="pageBreakAuto">
+                <div>
+                    <span>PROPOSED YIELD:</span>
+                    <table style="width:100%" class="borderTable pageBreakAuto">
+                        <tr><td><span style="word-wrap: break-word;overflow-wrap: break-word; font-weight:normal;font-size:11px;">@Html.Raw(Model.prodInfo.propYield.value)</span></td></tr>
+                    </table>
+                </div>
+                <div style="padding-top:1%;page-break-inside:avoid" class="pageBreakAuto">
+                    <span>HOLD TIME RECOMMENDATION:</span>
+                    <table style="width:100%" class="borderTable pageBreakAuto">
+                        <tr><td><span style="word-wrap: break-word;overflow-wrap: break-word; font-weight:normal;font-size:11px;">@Html.Raw(Model.prodInfo.hTRecomnd.value)</span></td></tr>
+                    </table>
+                </div>
+            </div>
+            <div style="padding-top:1%;" class="pageBreakAuto">
+                <span>MANUFACTURING SCHEMATIC REPRESENTATION:</span>
+                <table style="border:none;width:100%;border-spacing: 1em 3em;table-layout:fixed" class="pageBreakAuto">
+                    <tr>
+                        <th style="border:1px solid;width:5%">Step</th>
+                        <th style="border:1px solid;width:30%">Materials</th>
+                        <th style="border:1px solid;width:15%">Manufacturing Process</th>
+                        <th style="border:1px solid;width:25%">In Process Controls</th>
+                        <th style="border:1px solid;width:25%">Equipment</th>
+                    </tr>
+                    @{
+
+                        foreach (Strides.Models.PDFSchematics Schematics in Model.Schematics)
+                        {
+                            <tr style="margin-top:2%">
+                                <td style="border:1px solid;width:5%;padding-left:5px;">@Schematics.ProcessNo.Trim()</td>
+                                @{
+                                    if (Schematics.Inps.Any())
+                                    {
+                                        var InputData = string.Empty;
+                                        foreach (Strides.Models.Input input in Schematics.Inps)
+                                        {
+                                            InputData += @input.Name.Trim() + ",<br>";
+                                        }
+                                        <td style="border:1px solid;width:30%;padding-left:5px;word-break:break-all;word-wrap:break-word;">
+
+                                            @Html.Raw(InputData)
+                                        </td>
+                                    }
+                                    else
+                                    {
+                                        <td style="width:30%;padding-left:5px;word-break:break-all;word-wrap:break-word;"></td>
+                                    }
+                                }
+                                @{ if (@Schematics.ProcessName != null && @Schematics.ProcessName != string.Empty)
+                                    {
+                                        <td style="border:1px solid;width:15%;padding-left:5px;">@Html.Raw(Schematics.ProcessName.Trim())</td>
+                                    }
+                                    else
+                                    {
+                                        <td style="width:15%;word-break:break-all;word-wrap:break-word;"></td>
+
+                                    }
+                                }
+                                @{ if (Schematics.InprocessControls != null && Schematics.InprocessControls != "" && Schematics.InprocessControls != string.Empty)
+                                    {
+                                        var InproccessText = Schematics.InprocessControls.Replace(Environment.NewLine, "<br>").Replace("\n", "<br>");
+                                        <td style="border:1px solid;word-break:break-all;word-wrap:break-word; padding-left:5px;width:25%">@Html.Raw(InproccessText)</td>
+                                    }
+                                    else
+                                    {
+                                        <td style="padding-left:5px;width:25%;word-break:break-all;word-wrap:break-word;"></td>
+                                    }
+                                }
+
+                                @{
+                                    if (Schematics.Eqps.Any())
+                                    {
+
+                                        var equipData = string.Empty;
+                                        foreach (Strides.Models.Equipment eqps in Schematics.Eqps)
+                                        {
+                                            equipData += @eqps.Name.Trim() + ",<br>";
+                                        }
+                                        <td style="border:1px solid;width:25%;padding-left:5px;word-break:break-all;word-wrap:break-word;">
+                                            @Html.Raw(equipData)
+                                        </td>
+
+                                    }
+                                    else
+                                    {
+                                        <td style="width:25%;padding-left:5px;word-break:break-all;word-wrap:break-word;"></td>
+                                    }
+                                }
+                            </tr>
+                        }
+                    }
+                </table>
+            </div>
+
+        </div>
+        <footerDiv>
+            <footer>
+                <div style="font-size:11px;display:none;">
+                    <table style="border:none;border-collapse:separate;width:100%;border-spacing:5px;">
+                        <tr>
+                            <td style="padding:5px;border:1px solid black;vertical-align:top">
+                                <table style="width:100%;border-collapse:collapse;vertical-align:top">
+                                    <tr>
+                                        <td style="vertical-align:top;text-align:center;border-bottom:1px solid">
+                                            <span style="">
+                                                PREPARED BY
+                                            </span>:
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="padding-top:1%;text-align:center;">
+                                            @{
+                                                var flag = true;
+
+                                                if (Model.WorkFlowList != null && Model.WorkFlowList.Count > 0)
+                                                {
+                                                    foreach (Strides.Models.Workflow WF in Model.WorkFlowList)
+                                                    {
+                                                        if (WF.Status == "Prepared By" && WF.Reviewer != null && WF.Reviewer != string.Empty && WF.Reviewer != "")
+                                                        {
+                                                            flag = false;
+                                                            @Html.Raw(WF.Status == "Prepared By" ? WF.Reviewer + "<br>" + WF.Time1 : "<br><br><br>")
+                                                        }
+                                                    }
+                                                    if (flag)
+                                                    {
+                                                        @Html.Raw("<br><br><br>")
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    @Html.Raw("<br><br><br>")
+                                                }
+                                            }
+                                        </td>
+                                    </tr>
+                                </table>
+
+                            </td>
+                            <td style="border:1px solid black;padding:5px;vertical-align:top;">
+                                <table style="width:100%;border-collapse:collapse;vertical-align:top">
+                                    <tr>
+                                        <td style="vertical-align:top;text-align:center;border-bottom:1px solid">
+                                            <span style="">
+                                                CHECKED BY
+                                            </span>:
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="padding-top:1%;text-align:center">
+                                            @{
+                                                flag = true;
+                                                if (Model.WorkFlowList != null && Model.WorkFlowList.Count > 0)
+                                                {
+                                                    foreach (Strides.Models.Workflow WF in Model.WorkFlowList)
+                                                    {
+                                                        if (WF.Status == "Checked By" && WF.Reviewer != null && WF.Reviewer != string.Empty && WF.Reviewer != "")
+                                                        {
+                                                            flag = false;
+                                                            @Html.Raw(WF.Status == "Checked By" ? WF.Reviewer + "<br>" + WF.Time1 : "<br><br><br>")
+                                                        }
+                                                    }
+                                                    if (flag)
+                                                    {
+                                                        @Html.Raw("<br><br><br>")
+
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    @Html.Raw("<br><br><br>")
+                                                }
+                                            }
+
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td style="border:1px solid black;padding:5px;vertical-align:top;">
+
+                                <table style="width:100%;border-collapse:collapse;vertical-align:top">
+                                    <tr>
+                                        <td style="vertical-align:top;text-align:center;border-bottom:1px solid">
+                                            <span style="">
+                                                APPROVED BY
+                                            </span>:
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-top:1%;text-align:center">
+                                            @{
+                                                <table style="display:table;width:100%;border-collapse;text-align:center">
+                                                    <tr style="display:table-row">
+                                                        @{
+                                                            flag = true;
+                                                            if (Model.WorkFlowList != null && Model.WorkFlowList.Count > 0)
+                                                            {
+                                                                var loopCtrl = 1;
+                                                                foreach (Strides.Models.Workflow WF in Model.WorkFlowList)
+                                                                {
+                                                                    if (WF.Status == "Approved By" && WF.Reviewer != null && WF.Reviewer != string.Empty && WF.Reviewer != "")
+                                                                    {
+                                                                        flag = false;
+                                                                        if (loopCtrl == 1)
+                                                                        {
+                                                                            <td style="display:table-cell;">
+                                                                                @Html.Raw(WF.Status == "Approved By" ? WF.Reviewer + "<br>" + WF.Time1 : "<br><br><br>")
+                                                                            </td>
+                                                                            loopCtrl++;
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <td style="display:table-cell;border-left: 1px solid;">
+                                                                                @Html.Raw(WF.Status == "Approved By" ? WF.Reviewer + "<br>" + WF.Time1 : "<br><br><br>")
+                                                                            </td>
+
+                                                                        }
+                                                                    }
+                                                                }
+                                                                if (flag)
+                                                                {
+                                                                    <td style="display:table-cell;">
+                                                                        @Html.Raw("<br><br><br>")
+                                                                    </td>
+
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                <td style="display:table-cell">
+                                                                    @Html.Raw("<br><br><br>")
+                                                                </td>
+                                                            }
+                                                        }
+                                                    </tr>
+                                                </table>
+                                            }
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td style="border:1px solid black;padding:5px;vertical-align:top;">
+
+                                <table style="width:100%;border-collapse:collapse;vertical-align:top;">
+                                    <tr>
+                                        <td style="vertical-align:top;text-align:center;;border-bottom:1px solid">
+                                            <span style="">AUTHORISED BY </span>:
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-top:1%;text-align:center">
+                                            @{
+                                                flag = true;
+                                                if (Model.WorkFlowList != null && Model.WorkFlowList.Count > 0)
+                                                {
+                                                    foreach (Strides.Models.Workflow WF in Model.WorkFlowList)
+                                                    {
+                                                        if (WF.Status == "Authorised By" && WF.Reviewer != null && WF.Reviewer != string.Empty && WF.Reviewer != "")
+                                                        {
+                                                            flag = false;
+                                                            @Html.Raw(WF.Status == "Authorised By" ? WF.Reviewer + "<br>" + WF.Time1 : "<br><br><br>")
+                                                        }
+                                                    }
+
+                                                    if (flag)
+                                                    {
+                                                        @Html.Raw("<br><br><br>")
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    @Html.Raw("<br><br><br>")
+                                                }
+                                            }
+                                        </td>
+                                    </tr>
+                                </table>
+
+
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </footer>
+        </footerDiv>
+    }
+
+    <div id="preloader" style="display:none;">
+        <div style="position:relative">
+            <div style="left:50%;top:50%;position:fixed;">
+                <div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+            </div>
+        </div>
+    </div>
+
+
+</body>
+</html>

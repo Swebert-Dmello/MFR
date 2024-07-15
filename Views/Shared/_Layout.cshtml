@@ -1,0 +1,62 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MFR</title>
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    @RenderSection("scripts", required: false)
+    @RenderSection("MyScripts", required: false)
+</head>
+<body>
+    <div class="navbar navbar-inverse navbar-fixed-left shadow_nav" style="text-align:center;background-color: #00965e;border-color: #00965e">
+        <ul class="nav navbar-nav" style="    width: 66px;">
+            <li>
+                <div style="height:53px;    border-radius: 50%;    width: 53px;    margin-left: 17%;    margin-top: 18%;">
+                    <img src="~/Content/Images/logo_sm.png" style="height: 43px;margin-top:8%" />
+                </div>
+
+            </li>
+            <li>
+                @{
+                    if (!Convert.ToBoolean(Session["ViewMode"]))
+                    {
+                        <a href="Javascript:FinalSaveFile();" class="" value="Save" style="margin-top:28%;    width: 46px;margin-left:25%;height: 46px;" data-toggle="tooltip" data-placement="bottom" title="Upload XML To Agile">
+                            <span class="fa fa-floppy-o" style="font-size: 25px;color: #fff;line-height: 0;margin-left: -21%;"></span>
+                        </a>
+                    }
+                }
+
+            </li>
+            <li>
+                @{
+                    if (Convert.ToString(Session["MFRStatusFile"]) != "Complete")
+                    {
+                        <a href="Javascript:generatePDF();" class="" value="PDF" style="margin-top:28%;width: 46px;margin-left:25%;height: 46px;" data-toggle="tooltip" data-placement="bottom" title="View PDF">
+                            <span class="fa fa-file-pdf-o" style="font-size: 25px;color: #fff;line-height: 0;margin-left: -21%;"></span>
+                        </a>
+                    }
+                }
+            </li>
+            <li>
+                @{
+                    if (!Convert.ToBoolean(Session["ViewMode"]))
+                    {
+                        <a href="Javascript:SavePDFFile();" class="" value="Save" style="margin-top:28%;width: 46px;margin-left:25%;height: 46px;display:none;" data-toggle="tooltip" data-placement="bottom" title="Upload PDF To Agile" id="btnUploadPDF">
+                            <span class="fa fa-upload" style="font-size: 25px;color: #fff;line-height: 0;margin-left: -21%;"></span>
+                        </a>
+                    }
+                }
+
+            </li>
+        </ul>
+    </div>
+
+    @RenderBody()
+    <footer></footer>
+</body>
+</html>

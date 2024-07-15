@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Root>
+  <ns0:MasterFormulationRecord xmlns:ns0="http://sal.eai.biztalk/plm/mfrmprmasterdata/07/15" MFRName="MFR Integration testing" Version="1">
+    <ProductInformation>
+      <ProductCode Name="Product Code" Description="" value="2000183" />
+      <ProductName Name="Product Name" Description="" value="MFR Integration testing" />
+      <BatchSize Name="" Description="" value="1000000" />
+      <ProductDescription Name="" Description="" value="Round, Biconvex, white tablets, debossed with PL above the score line and 25 below on one side and plain on the other side." />
+      <LabelClaim Name="" Description="" value="" />
+      <Shelflife Name="" Description="" value="" />
+      <StorageCondition Name="" Description="" value="" />
+      <PrimaryPackaging Name="" Description="" value="" />
+      <PharmacopoeialReference Name="" Description="" value="" />
+      <Calculation Name="Calculation" Description="" value="" />
+      <Specification Name="Specification" Description="" value="" />
+      <Precautions Name="Precautions" Description="" value="" />
+      <Utilities Name="Utilities" Description="" value="" />
+      <Accessories Name="Accessories" Description="" value="" />
+    </ProductInformation>
+    <SpecialInstruction>
+      <Instruction Id="1" class="checklist" Text="Check the cleanliness of equipment and area before starting the manufacturing activity.&#xD;" Value="False" />
+      <Instruction Id="2" class="checklist" Text="Obtain line clearance from QA before starting production.&#xD;" Value="False" />
+      <Instruction Id="3" class="checklist" Text="Enter all details in the Batch Manufacturing Record (BMR).&#xD;" Value="False" />
+      <Instruction Id="4" class="checklist" Text="Provide tag / label on all in-process containers or bags with details of material and stage of operation.&#xD;" Value="False" />
+      <Instruction Id="5" class="checklist" Text="Check and enter S.R No. and dispensed quantity of each raw material in the BMR.&#xD;" Value="False" />
+      <Instruction Id="6" class="checklist" Text="Do not expose. R.M, Semi-finished and finished product to undue light and open atmosphere.&#xD;" Value="False" />
+      <Instruction Id="7" class="checklist" Text="Ensure that the compression room relative humidity is maintained at 45% &amp;plusmn; 5% and Temperature at NMT 22&amp;deg; &amp;plusmn; 3&amp;deg;C during&#xD;" Value="False" />
+      <Instruction Id="8" class="checklist" Text="manufacturing operation." Value="False" />
+    </SpecialInstruction>
+    <MasterRecipe Name="Paracetamol tablets 650 mg" Icon="rootIcon">
+      <ProcessSegment Name="">
+        <ManufacturingOperation xmlns="" Name="GRANULATION" PLM_STAGE_ID="1.1.1" Icon="fa fa-cogs cogs">
+          <ManufacturingProcedure Name="SIFTING" PLM_STAGE_ID="1.1.1.1" Icon="fa fa-code-fork fork">
+            <ManufacturingProcess Name="Process1" PLM_STAGE_ID="1.1.1.1.1" STAGE_ID="1" Icon="fa fa-cog cog" />
+            <ManufacturingProcess Name="NewProcess" PLM_STAGE_ID="1.1.1.1.2" STAGE_ID="2" Icon="fa fa-cog cog" />
+            <ManufacturingProcess Name="NewProcess" PLM_STAGE_ID="1.1.1.1.3" STAGE_ID="3" Icon="fa fa-cog cog" />
+            <ManufacturingProcess Name="NewProcess" PLM_STAGE_ID="1.1.1.1.4" STAGE_ID="4" Icon="fa fa-cog cog" />
+          </ManufacturingProcedure>
+          <ManufacturingProcedure Name="DRY_MIXING" PLM_STAGE_ID="1.1.1.2" Icon="fa fa-code-fork fork">
+          </ManufacturingProcedure>
+          <ManufacturingProcedure Name="NewProcedure" PLM_STAGE_ID="1.1.1.3" Icon="fa fa-code-fork fork" />
+        </ManufacturingOperation>
+      </ProcessSegment>
+    </MasterRecipe>
+  </ns0:MasterFormulationRecord>
+</Root>

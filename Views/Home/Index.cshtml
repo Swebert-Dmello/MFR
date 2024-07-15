@@ -1,0 +1,2136 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+<style>
+    .mCSB_container_wrapper {
+        position: inherit !important;
+    }
+</style>
+<div class="navbar navbar-fixed-top secondheader shadow_nav">
+    <ul class="nav navbar-nav">
+        @*<img src="~/Content/Images/logo.png" height="67" />*@
+    </ul>
+    <span class="navbar-brand navbar-right" style="padding-right: 3%;">
+        Welcome, @ViewBag.UserName
+    </span>
+
+    <span class="navbar-brand navbar-left" style="padding-right: 3%;padding-top: 6px;">
+        <div style="display: inline-flex;"><h4>@Session["MFRTitle"]</h4> &nbsp; <h4 style=""> - Revision: @Session["MFRRevision"]</h4></div>
+    </span>
+
+</div>
+
+<div class="wrapper">
+    <nav id="sidebar" style="box-shadow: 0px 0px 1px 1px rgba(0,0,0,0.5);">
+        <div class="sidebar-header">
+            <table class="table table-bordered" style="background: white;text-align: center;margin-bottom:5px;    box-shadow: -1px 0px 1px 1px rgba(0,0,0,0.5); margin-top: 2%;">
+                <tr>
+                    <td><a @(Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true" } : new { @href = "Javascript:AddNewNode();" }) style="color: rgb(34, 181, 115);" title="Add"><i class="fa fa-plus"></i></a></td>
+                    <td><a @(Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true" } : new { @href = "Javascript:DeleteNode();" }) style="color: rgb(34, 181, 115);" title="Delete"><i class="fa fa-trash"></i></a></td>
+                    <td><a @(Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true" } : new { @href = "Javascript:Move('UP');" }) style="color: rgb(34, 181, 115);" title="Move Up"><i class="fa fa-arrow-up"></i></a></td>
+                    <td><a @(Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true" } : new { @href = "Javascript:Move('DOWN');" }) style="color: rgb(34, 181, 115);" title="Move Down"><i class="fa fa-arrow-down"></i></a></td>
+                    <td><a @(Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true" } : new { @href = "Javascript:CopyNode();" }) style="color: rgb(34, 181, 115);" title="Copy"><i class="fa fa-copy"></i></a></td>
+                    <td><a @(Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true" } : new { @href = "Javascript:PasteNode();" }) style="color: rgb(34, 181, 115);" title="Paste"><i class="fa fa-paste"></i></a></td>
+                    <td id="tdTreeEx" style="display:none">
+                        <a href="Javascript:ExpandTree();" id="treeEx" title="Expand All" style="color: rgb(34, 181, 115);"><i class="fa fa-level-down"></i></a>
+                    </td>
+
+
+                </tr>
+            </table>
+        </div>
+        <div style="overflow-y:auto;max-height:567px;position:relative;color: black;" class="sideBarScrollY">
+            <div style="overflow-x:auto;max-width:330px;" class="sideBarScrollX">
+                <div id="jstree">
+
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div id="content">
+        @Html.Hidden("hiddenTab")
+        <div id="details"></div>
+        <div style="color:#f0f0f0">@Session.SessionID</div>
+    </div>
+
+    @section MyScripts {
+        <script>
+
+           @*@(Session["SystemException"]!=null? Session["SystemException"] :"var zzz");*@
+            var localTemp = [];
+            var modelInputLookup = {array:{}}
+            var modelOutputLookup = { array: {}}
+            var modelParameterLookup = { array: {}}
+            var modelEquipmentLookup = { array: {} }
+            var jConfirm = null;
+            var currentCopy = {ID:"",Name:"",Parent:""};
+            var parentPaste = { ID: "", Name: "", Parent: "" };
+            var UOMLIST = [];
+            $.fn.extend({
+                moveRow: function (oldPosition, newPosition) {
+            return this.each(function ()
+            {
+                var row = $(this).find('tr').eq(oldPosition).detach();
+                    if (newPosition == $(this).find('tr').length) {
+                        $(this).find('tr').eq(newPosition - 1).after(row);
+                    } else {
+
+                        $(this).find('tr').eq(newPosition).before(row);
+                    }
+            });
+        }
+    });
+
+
+            function slideSideBar(ctrl) {
+                if ($(ctrl).find("i")[0].className.indexOf("left") > 0) {
+                    $("#sidebar").css("display", "none");
+                    $($(ctrl).find("i")[0]).removeClass();
+                    $($(ctrl).find("i")[0]).addClass("fa fa-chevron-right");
+                    $(ctrl).css("right","93%");
+                } else {
+                    $("#sidebar").css("display", "block");
+                    $($(ctrl).find("i")[0]).removeClass();
+                    $($(ctrl).find("i")[0]).addClass("fa fa-chevron-left");
+                    $(ctrl).css("right", "68.8%");
+                }
+            }
+
+
+
+            function generatePDF() {
+                $('#btnUploadPDF').css('display', 'block');
+                window.open('@Url.Action("Index","PDFCreator")',
+                    '_blank' // <- This is what makes it open in a new window.
+                );
+            }
+
+            $(window).on('resize', function () {
+              //  $('#tblInputs').width($('.InputList').parent().width());
+            });
+
+            $(function () {
+                $('[data-toggle="tooltip"]').tooltip({ trigger: 'hover'})
+            })
+
+            function ExpandTree() {
+                if ($('#treeEx').find('i')[0].className.trim() == "fa fa-level-down") {
+                    $("#jstree").jstree("open_all");
+                    $('#treeEx').find('i').removeClass().addClass('fa fa-level-up');
+                    $('#treeEx').prop('title', 'Close All');
+                    $(".sideBarScrollY").mCustomScrollbar({ axis: "y", theme: "3d-dark", scrollButtons: { enable: true }, advanced: { updateOnContentResize: true, updateOnBrowserResize: true } });
+                    $(".sideBarScrollX").mCustomScrollbar({ axis: "x", theme: "3d-dark", scrollButtons: { enable: true }, advanced: { updateOnContentResize: true, updateOnBrowserResize: true, autoExpandHorizontalScroll: true } });
+                    $(".sideBarScrollY").mCustomScrollbar("update");
+                    $(".sideBarScrollX").mCustomScrollbar("update");
+                } else {
+                    $("#jstree").jstree("close_all");
+                    $('#treeEx').find('i').removeClass().addClass('fa fa-level-down');
+                    $('#treeEx').prop('title', 'Expand All');
+                    $(".sideBarScrollY").mCustomScrollbar("update");
+                    $(".sideBarScrollX").mCustomScrollbar("update");
+
+                }
+            }
+
+            function Exception1() {
+                $(".fa-floppy-o").css('display', 'none');
+                $(".fa-file-pdf-o").css('display', 'none');
+                $.confirm({
+            icon: 'fa fa-question-circle-o',
+                    theme: 'supervan',
+                    title: 'Exception!',
+                    content: 'Exception Due To Document Is In Check Out Mode!',
+                    closeIcon: false,
+                    animation: 'scale',
+                    type: 'red',
+                    buttons: {
+                        close: function () {
+                            window.open('', '_self', '');
+                            window.close();
+                }
+            }
+        });
+            }
+            function Exception2() {
+                $(".fa-floppy-o").css('display', 'none');
+                $(".fa-file-pdf-o").css('display', 'none');
+            $.confirm({
+                    icon: 'fa fa-question-circle-o',
+                    theme: 'supervan',
+                    title: 'Exception!',
+                    content: 'Exception Due To Change Order Table Is Empty!',
+                    closeIcon: false,
+                    animation: 'scale',
+                    type: 'red',
+                    buttons: {
+                        close: function () {
+                            window.open('', '_self', '');
+                            window.close();
+                        }
+                    }
+                });
+            }
+            function Exception3() {
+                $(".fa-floppy-o").css('display', 'none');
+                $(".fa-file-pdf-o").css('display', 'none');
+                $.confirm({
+                    icon: 'fa fa-question-circle-o',
+                    theme: 'supervan',
+                    title: 'Exception!',
+                    content: 'Exception Due To MFR/MPR Approval Process Not Available!',
+                    closeIcon: false,
+                    animation: 'scale',
+                    type: 'red',
+                    buttons: {
+                        close: function () {
+                            window.open('', '_self', '');
+                            window.close();
+                        }
+                    }
+                });
+            }
+            function Exception4() {
+                $(".fa-floppy-o").css('display', 'none');
+                $(".fa-file-pdf-o").css('display', 'none');
+                $.confirm({
+                    icon: 'fa fa-question-circle-o',
+                    theme: 'supervan',
+                    title: 'Exception!',
+                    content: 'Exception Due To No MFR.xml In Folder!',
+                    closeIcon: false,
+                    animation: 'scale',
+                    type: 'red',
+                    buttons: {
+                        close: function () {
+                            window.open('', '_self', '');
+                            window.close();
+                        }
+                    }
+                });
+            }
+            function Exception5() {
+                $(".fa-floppy-o").css('display', 'none');
+                $(".fa-file-pdf-o").css('display', 'none');
+                $.confirm({
+                    icon: 'fa fa-question-circle-o',
+                    theme: 'supervan',
+                    title: 'Exception!',
+                    content: 'Exception Due To Empty Folder!',
+                    closeIcon: false,
+                    animation: 'scale',
+                    type: 'red',
+                    buttons: {
+                        close: function () {
+                            window.open('', '_self', '');
+                            window.close();
+                        }
+                    }
+                });
+            }
+            function Exception6() {
+                $(".fa-floppy-o").css('display', 'none');
+                $(".fa-file-pdf-o").css('display', 'none');
+                $.confirm({
+                    icon: 'fa fa-question-circle-o',
+                    theme: 'supervan',
+                    title: 'Exception!',
+                    content: 'Exception Due To Check Out Mode!',
+                    closeIcon: false,
+                    animation: 'scale',
+                    type: 'red',
+                    buttons: {
+                        close: function () {
+                            window.open('', '_self', '');
+                            window.close();
+                        }
+                    }
+                });
+            }
+            function Exception7() {
+                $(".fa-file-pdf-o").css('display', 'none');
+                $(".fa-floppy-o").css('display', 'none');
+                $.confirm({
+                    icon: 'fa fa-question-circle-o',
+                    theme: 'supervan',
+                    title: 'Exception!',
+                    content: 'Exception Due To MFR.xml Not Available In Attachment!',
+                    closeIcon: false,
+                    animation: 'scale',
+                    type: 'red',
+                    buttons: {
+                        close: function () {
+                            window.open('', '_self', '');
+                            window.close();
+                        }
+                    }
+                });
+            }
+
+            function AuthFailed() {
+                $(".fa-file-pdf-o").css('display', 'none');
+                $(".fa-floppy-o").css('display', 'none');
+                $.confirm({
+                    icon: 'fa fa-question-circle-o',
+                    theme: 'supervan',
+                    title: 'Exception!',
+                    content: 'Not Valid Link!',
+                    closeIcon: false,
+                    animation: 'scale',
+                    type: 'red',
+                    buttons: {
+                        close: function () {
+                            window.open('', '_self', '');
+                            window.close();
+                        }
+                    }
+                });
+            }
+
+            function DetailsInfoNotFound() {
+                $(".fa-file-pdf-o").css('display', 'none');
+                $(".fa-floppy-o").css('display', 'none');
+                $.confirm({
+                    icon: 'fa fa-question-circle-o',
+                    theme: 'supervan',
+                    title: 'Exception!',
+                    content: 'Details Info JSON Not Found',
+                    closeIcon: false,
+                    animation: 'scale',
+                    type: 'red',
+                    buttons: {
+                        close: function () {
+                            window.open('', '_self', '');
+                            window.close();
+                        }
+                    }
+                });
+            }
+
+
+            function FinalSaveFile() {
+                var urlP = '@Url.Action("finalSaveUpload", "Home")';
+                var d = new Date();
+                $.ajax({
+                    url: urlP + '?d=' +
+                        d.getDate() +
+                        d.getHours() +
+                        d.getMinutes() +
+                        d.getMilliseconds(),
+                    type:"GET",
+                    cache: false,
+                    beforeSend: function () {
+                        $('#preloader').fadeIn('slow');
+                    },
+
+                    success: function (data) {
+                        $('#preloader').fadeOut('slow');
+                       // $.alert(data);
+                        $.confirm({
+                            title: 'XML Export!',
+                            content: data,
+                            buttons: {
+                                close: function () {
+                                    window.open('', '_self', '');
+                                    window.close();
+                                },
+                            }
+                        });
+                    },
+                    complete: function () {
+                        $('#preloader').fadeOut('slow');
+                    },
+                    error: function (xhr) { // if error occured
+                        $('#preloader').fadeOut('slow');
+                        $.alert(data);
+                    }
+                });
+            }
+
+    function searchInput() {
+        var resObject = [];
+
+          var url = '@Url.Action("callAgileSearch", "Process")';
+          callAjax(url + '?type=Input&searchParam=' + $('#txtSearch').val().toLowerCase(), 'GET', null, function (response) {
+            resObject = JSON.parse(response);
+
+            for (var i = 0; i < resObject.length; i++) {
+                var temp = { UOM: "", Number: "", Name: "", Id: "", Source: "" }
+                temp.Id = parseInt(i + 1);
+                temp.Number = resObject[i].Number;
+                temp.UOM = resObject[i].UOM;
+                temp.Name = resObject[i].Name;
+                temp.Source = (resObject[i].Source == undefined || resObject[i].Source == null ? "" : resObject[i].Source)
+                resObject[i] = temp;
+            }
+
+            modelInputLookup.array = resObject;
+
+            //for (var i = 0; i < resObject.length; i++) {
+            //    if (modelInputLookup.array[i].Name.toLowerCase().indexOf($('#txtSearch').val().toLowerCase()) >= 0 || modelInputLookup.array[i].Number.toLowerCase().indexOf($('#txtSearch').val().toLowerCase()) >= 0) {
+            //        resObject.push(modelInputLookup.array[i]);
+            //    }
+            //}
+
+            var tableList = "<table class='table table-bordered table-hover'>";
+            tableList += "<tr>";
+            tableList += "<th style='display:none;'>Id</th>";
+            tableList += "<th>Material Code</th>";
+            tableList += "<th>Material Name</th>";
+            tableList += "<th>UOM</th>";
+            tableList += "<th>Select</th>";
+            tableList += "<th style='display:none;'>Source</th>";
+            tableList += "</tr>";
+            localTemp = [];
+            $.each(resObject, function (index, value) {
+                tableList += '<tr>';
+                tableList += '<td style="display: none;">' + value.Id + '</td>';
+                tableList += '<td>' + value.Number + '</td>';
+                tableList += '<td>' + value.Name + '</td>';
+                tableList += '<td>' + value.UOM + '</td>';
+                tableList += '<td style="padding: 0px; padding-left:10px; font-size:20px;"><a href="Javascript:selectInputList(\'' + value.Id + '\');"><i class="fa fa-plus-square" aria-hidden="true"></a></td>';
+                tableList += '<td style="display:none;">' + value.Source + '</th>';
+                tableList += '</tr>';
+            });
+            tableList += "</table>";
+            $('#divLookups')[0].innerHTML = tableList;
+        });
+        }
+
+            function searchParameter() {
+                var resObject = [];
+
+                for (var i = 0; i < modelParameterLookup.array.length; i++) {
+                    if (modelParameterLookup.array[i].name.toLowerCase().indexOf($('#txtSearch').val().toLowerCase()) >= 0 || modelParameterLookup.array[i].number.toLowerCase().indexOf($('#txtSearch').val().toLowerCase()) >= 0) {
+                        resObject.push(modelParameterLookup.array[i]);
+                    }
+                }
+
+                var tableList = "<table class='table table-bordered table-hover'>";
+                tableList += "<tr>";
+                tableList += "<th>Id</th>";
+                tableList += "<th>Name</th>";
+                tableList += "<th>Select</th>";
+                tableList += "</tr>";
+                localTemp = [];
+
+                $.each(resObject, function (index, value) {
+                    tableList += '<tr>';
+                    tableList += '<td>' + value.Id + '</td>';
+                    tableList += '<td>' + value.name + '</td>';
+                    tableList += '<td style="padding: 0px; padding-left:10px; font-size:20px;"><a href="Javascript:selectParameterList(\'' + value.Id + '\');"><i class="fa fa-plus-square" aria-hidden="true"></a></td>';
+                    tableList += '</tr>';
+                });
+                tableList += "</table>";
+                $('#divLookups')[0].innerHTML = tableList;
+            }
+
+            function searchEquipment() {
+                var resObject = [];
+
+                for (var i = 0; i < modelEquipmentLookup.array.length; i++) {
+                    if (modelEquipmentLookup.array[i].name.toLowerCase().indexOf($('#txtSearch').val().toLowerCase()) >= 0 || modelEquipmentLookup.array[i].number.toLowerCase().indexOf($('#txtSearch').val().toLowerCase()) >= 0) {
+                        resObject.push(modelEquipmentLookup.array[i]);
+                    }
+                }
+
+                var tableList = "<table class='table table-bordered table-hover'>";
+                tableList += "<tr>";
+                tableList += "<th>Id</th>";
+                //tableList += "<th>ANumber</th>";
+                tableList += "<th>Name</th>";
+                tableList += "<th>Select</th>";
+                tableList += "</tr>";
+                localTemp = [];
+                $.each(resObject, function (index, value) {
+                    tableList += '<tr>';
+                    tableList += '<td>' + value.Id + '</td>';
+                    //tableList += '<td>' + value.number + '</td>';
+                    tableList += '<td>' + value.name + '</td>';
+                    tableList += '<td style="padding: 0px; padding-left:10px; font-size:20px;"><a href="Javascript:selectEquipmentList(\'' + value.Id + '\');"><i class="fa fa-plus-square" aria-hidden="true"></a></td>';
+                    tableList += '</tr>';
+                });
+                tableList += "</table>";
+                $('#divLookups')[0].innerHTML = tableList;
+            }
+
+            function searchOutput() {
+                var responseObject = [];
+                var resObject=[];
+                //for (var i = 0; i < modelOutputLookup.array.length; i++) {
+                //    if (modelOutputLookup.array[i].Name.toLowerCase().indexOf($('#txtSearch').val().toLowerCase()) >= 0 || modelOutputLookup.array[i].Number.toLowerCase().indexOf($('#txtSearch').val().toLowerCase()) >= 0) {
+                //        resObject.push(modelOutputLookup.array[i]);
+                //    }
+                //}
+
+                var url = '@Url.Action("callAgileSearch", "Process")';
+                callAjax(url + '?type=Output&searchParam=' + $('#txtSearch').val().toLowerCase(), 'GET', null, function (response) {
+                    responseObject = JSON.parse(response);
+                    for (var i = 0; i < responseObject.length; i++) {
+                        var temp = { UOM: "", Number: "", Name: "", Id: "", Type: "" }
+                        if (responseObject[i].Type == "SFG" || responseObject[i].Type == "FG" || responseObject[i].Type == "WIP") {
+                            temp.Id = parseInt(i + 1);
+                            temp.Number = responseObject[i].Number;
+                            temp.Name = responseObject[i].Name;
+                            temp.Type = responseObject[i].Type;
+                            temp.UOM = responseObject[i].UOM;
+                            resObject.push(temp);
+                        }
+                    }
+
+                    modelOutputLookup.array = resObject;
+
+                    var tableList = "<table class='table table-bordered table-hover'>";
+                    tableList += "<tr>";
+                    tableList += "<th style='display:none;'>Id</th>";
+                    tableList += "<th>Material Code</th>";
+                    tableList += "<th>Name</th>";
+                    tableList += "<th>UOM</th>";
+                    tableList += "<th>Select</th>";
+                    tableList += "</tr>";
+                    localTemp = [];
+                    $.each(resObject, function (index, value) {
+                        i++;
+                        tableList += '<tr>';
+                        tableList += '<td style="display: none;">' + value.Id + '</td>';
+                        tableList += '<td>' + value.Number + '</td>';
+                        tableList += '<td>' + value.Name + '</td>';
+                        tableList += '<td>' + value.UOM + '</td>';
+                        tableList += '<td style="padding: 0px; padding-left:10px; font-size:20px;"><a href="Javascript:selectOutputList(\'' + value.Id + '\');"><i class="fa fa-plus-square" aria-hidden="true"></a></td>';
+                        tableList += '</tr>';
+                    });
+                    tableList += "</table>";
+                    $('#divLookups')[0].innerHTML = tableList;
+                });
+          }
+
+            function CopyNode() {
+                currentCopy.ID = $('#jstree').jstree().get_selected(true)[0].id;
+                currentCopy.Parent = $('#jstree').jstree().get_selected(true)[0].parent;
+                currentCopy.Name = $('#jstree').jstree().get_selected(true)[0].original.node_name;
+                alertify.set('notifier', 'position', 'top-right');
+                alertify.notify('Copied', 'success',2);
+            }
+
+            function PasteNode() {
+                parentPaste.ID = $('#jstree').jstree().get_selected(true)[0].id;
+                parentPaste.Name = $('#jstree').jstree().get_selected(true)[0].original.node_name;
+                parentPaste.Parent = $('#jstree').jstree().get_selected(true)[0].parent;
+                if (currentCopy.ID == parentPaste.ID) {
+                    $.alert({
+                        title: 'Error',
+                        icon: 'fa fa-error',
+                        type: 'red',
+                        content: 'Cannot paste to same element. Please select the parent',
+                    });
+                }
+                else if (currentCopy.Name == "ManufacturingOperation" && parentPaste.Name != "MasterRecipe") {
+                    $.alert({
+                        title: 'Error',
+                        icon: 'fa fa-error',
+                        type: 'red',
+                        content: 'Cannot copy "' + currentCopy.Name + '" to "' + parentPaste.Name+'". Please select the Root',
+                    });
+                }
+
+                else if (currentCopy.Name == "ManufacturingProcedure" && parentPaste.Name != "ManufacturingOperation") {
+                    $.alert({
+                        title: 'Error',
+                        icon: 'fa fa-error',
+                        type: 'red',
+                        content: 'Cannot copy "' + currentCopy.Name + '" to "' + parentPaste.Name + '". Please select any ManufacturingOperation',
+                    });
+                }
+
+                else if (currentCopy.Name == "ManufacturingProcess" && parentPaste.Name != "ManufacturingProcedure") {
+                    $.alert({
+                        title: 'Error',
+                        icon: 'fa fa-error',
+                        type: 'red',
+                        content: 'Cannot copy "' + currentCopy.Name + '" to "' + parentPaste.Name + '". Please select any ManufacturingProcedure',
+                    });
+                }
+
+                else {
+                    $('#jstree').jstree(true).copy_node($('#jstree').jstree(true).get_node(currentCopy.ID), $('#jstree').jstree(true).get_node(parentPaste.ID));
+                    $('#jstree').jstree(true).open_node(parentPaste.ID);
+                    alertify.set('notifier', 'position', 'top-right');
+                    alertify.notify('Pasted', 'success', 2);
+                }
+            }
+
+            function AddNewNode() {
+                var parent = null;
+                var node_name = "";
+                var node_id = "";
+                if ($('#jstree').jstree().get_selected(true).length==0) {
+                    $.alert({
+                        title: 'Error',
+                        icon: 'fa fa-error',
+                        type: 'red',
+                        content: 'Please select one item',
+                    });
+                }
+                else if ($('#jstree').jstree().get_selected(true)[0].original.node_name == "ManufacturingProcess") {
+                    $.alert({
+                        title: 'Error',
+                        icon: 'fa fa-error',
+                        type: 'red',
+                        content: 'Cant create child of Process',
+                    });
+
+                }
+                else {
+                    var url='@Url.Action("CreateJSNode", "Home")';
+                        callAjax(url, "POST", $('#jstree').jstree().get_selected(true)[0].original, createNodeSuccess, createNodeSuccess);
+                }
+            }
+
+            function createNodeSuccess(data) {
+                alertify.set('notifier', 'position', 'top-right');
+                alertify.notify('Added', 'success', 2);
+                reloadTree(data);
+            }
+
+            function SelectFromOutputList(Id) {
+                var flag = true;
+                $.each($("#tblOutputList").find('tbody').find('tr'), function (index, value) {
+                    if ($(this).find('td').length > 0) {
+                        if ($(this).find('td').first().text() == Id) {
+                            for (var i = 0; i < $("#outputUL").find('li').length;i++) {
+                                if ($($("#outputUL").find('li')[i]).find('a').text() == $($(this).find('td')[1]).text()) {
+                                    flag = false;
+                                    break;
+                                }
+                            }
+                            if (flag)
+                                $("#outputUL").append('<li><a class="dropdown-item" href="Javascript:selectInput(\'' + $($(this).find('td')[1]).text() + '\',\'Output\');">' + $($(this).find('td')[1]).text() + '</a></li>');
+                        }
+                    }
+                });
+                $('#modalOutputList').modal('hide');
+            }
+
+            function loadOutput() {
+                var url='@Url.Action("getoutputList", "Home")';
+                    callAjax(url, "GET", null, getOutputListSuccess, getJSONSuccess);
+            }
+
+            function getOutputListSuccess(data) {
+                if (data.length > 0) {
+                    var table = "<table class='table table-bordered table-hover'>";
+                    table += "<tr>";
+                    table += "<th style='display:none;'>SlNo</th>";
+                    table += "<th>ID</th>";
+                    table += "<th>Name</th>";
+                    //table += "<th>ANumber</th>";
+                    //table += "<th>Description</th>";
+                    //table += "<th>FuncCategory</th>";
+                    //table += "<th>Type</th>";
+                    table += "<th>Select</th>";
+                    table += "</tr>";
+                    for (var i = 0; i < data.length; i++) {
+                        table += "<tr>";
+                        table += "<td style='display:none;'>" + i+ "</td>";
+                        table += "<td>" + data[i].Id + "</td>";
+                        table += "<td>" + data[i].Name + "</td>";
+                        //table += "<td>" + data[i].ANumber + "</td>";
+                        //table += "<td>" + data[i].Description + "</td>";
+                        //table += "<td>" + data[i].FuncCategory + "</td>";
+                        //table += "<td>" + data[i].Type + "</td>";
+
+                        table += '<td style="padding: 0px; padding-left:10px; font-size:20px;"><a href="Javascript:SelectFromOutputList(\'' + i +'\');"><i class="fa fa-plus-square" aria-hidden="true"></i></a></td>';
+                        table += "</tr>";
+                    }
+                    table += "</table>";
+                    $("#tblOutputList")[0].innerHTML = table;
+                    $('#modalOutputList').modal('show');
+                } else {
+                    $.alert({
+                        title: 'Warning',
+                        icon: 'fa fa-warning',
+                        type: 'orange',
+                        content: 'No Output Items Found!',
+                    });
+                }
+            }
+
+            function callAgileInput(type) {
+                var Type = type;
+
+                if (Type == "Input") {
+
+                    //if (Type == "Input") {
+                    //    $('#preloader').fadeIn('slow');
+                    //    var resObject = jQuery.parseJSON(response);
+                    //    console.log("TOtal count :" + resObject.length);
+                    //    var counter = 0;
+                    //    for (var i = 0; i < resObject.length; i++) {
+                    //        var temp = { UOM: "", Number: "", Name: "", Id: "", Source: "" }
+                    //        temp.Id = parseInt(i + 1);
+                    //        temp.Number = resObject[i].Number;
+                    //        temp.UOM = resObject[i].UOM;
+                    //        temp.Name = resObject[i].Name;
+                    //        temp.Source = (resObject[i].Source == undefined || resObject[i].Source == null ? "" : resObject[i].Source)
+                    //        resObject[i] = temp;
+                    //    }
+                    //    //modelInputLookup.array = resObject;
+                        var tableList = "<table class='table table-bordered table-hover'>";
+                        tableList += "<tr>";
+                        tableList += "<th style='display:none;'>Id</th>";
+                        tableList += "<th>Material Code</th>";
+                        tableList += "<th>Material Name</th>	";
+                        tableList += "<th>UOM</th>	";
+                        tableList += "<th>Select</th>";
+                        tableList += "<th style='display:none;'>Source</th>";
+                        tableList += "</tr>";
+                    //    $.each(resObject, function (index, value) {
+                    //        tableList += '<tr>';
+                    //        tableList += '<td style="display: none;">' + value.Id + '</td>';
+                    //        tableList += '<td>' + value.Number + '</td>';
+                    //        tableList += '<td>' + value.Name + '</td>';
+                    //        tableList += '<td>' + value.UOM + '</td>';
+                    //        tableList += '<td style="padding:0px;padding-left:10px;font-size: 20px;"><a href="Javascript:selectInputList(\'' + value.Id + '\');"><i class="fa fa-plus-square" aria-hidden="true"></i></a></td>';
+                    //        tableList += '<td style="display:none;">' + value.Source + '</td>';
+                    //        tableList += '</tr>';
+                    //    });
+                    //    modelInputLookup.array = resObject;
+                         tableList += "</table>";
+                         $('#divLookups')[0].innerHTML = tableList;
+                         $('#divSearchBtn')[0].innerHTML = '<input type="text" class="form-control" id="txtSearch"  /><a href="Javascript:searchInput();" class="btn btn-info"><i class="fa fa-search"></i></button>';
+                    //    $('#preloader').fadeOut('slow');
+                    //}
+
+                    $('#modalLookups').modal('show');
+                }
+                else if (Type == "Output") {
+                            //var responseObject = jQuery.parseJSON(response);
+                            //var resObject = [];
+                            //for (var i = 0; i < responseObject.length; i++) {
+                            //    var temp = { UOM: "", Number: "", Name: "", Id: "", Type: "" }
+                            //    if (responseObject[i].Type == "SFG" || responseObject[i].Type == "FG" || responseObject[i].Type == "WIP") {
+                            //        temp.Id = parseInt(i + 1);
+                            //        temp.Number = responseObject[i].Number;
+                            //        temp.Name = responseObject[i].Name;
+                            //        temp.Type = responseObject[i].Type;
+                            //        temp.UOM = responseObject[i].UOM;
+                            //        resObject.push(temp);
+                            //    }
+                            //}
+                            var tableList = "<table class='table table-bordered table-hover'>";
+                            tableList += "<tr>";
+                            tableList += "<th>Material Code</th>";
+                            tableList += "<th>Name</th>	";
+                            tableList += "<th>UOM</th>	";
+                            tableList += "<th>Select</th>	";
+                            tableList += "</tr>";
+                            //var i = 0;
+                            //localTemp = [];
+                            //$.each(resObject, function (index, value) {
+                            //    i++;
+                            //    tableList += '<tr>';
+                            //    tableList += '<td>' + value.Number + '</td>';
+                            //    tableList += '<td>' + value.Name + '</td>';
+                            //    tableList += '<td>' + value.UOM + '</td>';
+                            //    tableList += '<td style="padding: 0px; padding-left:10px; font-size:20px;"><a href="Javascript:selectOutputList(\'' + value.Id + '\');"><i class="fa fa-plus-square" aria-hidden="true"></i></a></td>';
+                            //    tableList += '</tr>';
+                            //});
+                            //modelOutputLookup.array = resObject;
+                            tableList += "</table>";
+                            $('#divLookups')[0].innerHTML = tableList;
+                            $('#divSearchBtn')[0].innerHTML = '<input type="text" class="form-control" id="txtSearch"  /><a href="Javascript:searchOutput();" class="btn btn-info"><i class="fa fa-search"></i></button>';
+                            $('#modalLookups').modal('show');
+                        }
+
+                else {
+                    var url = '@Url.Action("callAgile", "Process")';
+                    callAjax(url + '?type=' + type, 'GET', null, function (response) {
+                        if (Type == "Parameter") {
+                            var resObject = jQuery.parseJSON(response);
+                            //modelParameterLookup.array = resObject;
+                            var tableList = "<table class='table table-bordered table-hover'>";
+                            tableList += "<tr>";
+                            tableList += "<th>Id</th>";
+                            tableList += "<th>Name</th>";
+                            tableList += "<th>Select</th>";
+                            tableList += "</tr>";
+                            localTemp = [];
+                            var i = 0;
+                            $.each(resObject, function (index, value) {
+                                i++;
+                                tableList += '<tr>';
+                                tableList += '<td>' + i + '</td>';
+                                tableList += '<td>' + $('<textarea>').html(value.Name).val() + '</td>';
+                                tableList += '<td style="padding:0px;padding-left:10px;font-size: 20px;"><a href="Javascript:selectParameterList(\'' + i + '\');"><i class="fa fa-plus-square" aria-hidden="true"></i></a></td>';
+                                tableList += '</tr>';
+                                var localStr = { Id: "", name: "", number: "" };
+                                localStr.Id = i;
+                                localStr.name = value.Name;
+                                localStr.number = value.Name;
+                                localTemp.push(localStr)
+                            });
+                            modelParameterLookup.array = localTemp;
+                            tableList += "</table>";
+                            $('#divLookups')[0].innerHTML = tableList;
+                            $('#divSearchBtn')[0].innerHTML = '<input type="text" class="form-control" id="txtSearch"  /><a href="Javascript:searchParameter();" class="btn btn-info"><i class="fa fa-search"></i></button>';
+                        }
+                        else if (Type == "Equipment") {
+                            var resObject = jQuery.parseJSON(response);
+                            localTemp = [];
+                            //modelEquipmentLookup.array = resObject;
+                            var tableList = "<table class='table table-bordered table-hover'>";
+                            tableList += "<tr>";
+                            tableList += "<th>Id</th>";
+                            //tableList += "<th>Material Number</th>";
+                            tableList += "<th>Name</th>	";
+                            tableList += "<th>Select</th>	";
+                            tableList += "</tr>";
+                            var i = 0;
+                            $.each(resObject, function (key, val) {
+                                i++;
+                                tableList += '<tr>';
+                                tableList += '<td>' + i + '</td>';
+                                //tableList += '<td>' + val + '</td>';
+                                tableList += '<td>' + key + '</td>';
+                                var localStr = {
+                                    Id: "", name: "", number: ""
+                                }
+                                localStr.Id = i;
+                                localStr.name = key;
+                                localStr.number = val;
+                                localTemp.push(localStr);
+                                tableList += '<td style="padding:0px;padding-left:10px;font-size: 20px;"><a href="Javascript:selectEquipmentList(\'' + i + '\');"><i class="fa fa-plus-square" aria-hidden="true"></i></a></td>';
+                                tableList += '</tr>';
+                            });
+                            modelEquipmentLookup.array = localTemp;
+                            tableList += "</table>";
+                            $('#divLookups')[0].innerHTML = tableList;
+                            $('#divSearchBtn')[0].innerHTML = '<input type="text" class="form-control" id="txtSearch"  /><a href="Javascript:searchEquipment();" class="btn btn-info"><i class="fa fa-search"></i></button>';
+                        }
+
+
+                        $('#modalLookups').modal('show');
+                        // $(".divLookups").mCustomScrollbar("destroy");
+                        //   $(".divLookups").mCustomScrollbar({ axis: "y", theme: "3d-dark", advanced: { updateOnContentResize: true, updateOnBrowserResize: true } });
+
+                    }, null);
+                }
+            }
+
+            function selectInputList(Id) {
+                AddInput(getArrayObject(Id, modelInputLookup.array));
+                $('#modalLookups').modal('hide');
+            }
+
+            function selectOutputList(Id) {
+                AddOutput(getArrayObject(Id, modelOutputLookup.array));
+                $(".OutputList").mCustomScrollbar("update");
+                $(".OutputList").mCustomScrollbar({ axis: "y", theme: "3d-dark", scrollButtons: { enable: true }, advanced: { updateOnContentResize: true, updateOnBrowserResize: true}});
+                $('#modalLookups').modal('hide');
+            }
+
+            function selectEquipmentList(Id) {
+                AddEquipment(getArrayObject(Id, modelEquipmentLookup.array));
+                $(".EquipmentList").mCustomScrollbar("update");
+                $(".EquipmentList").mCustomScrollbar({ axis: "y", theme: "3d-dark", scrollButtons: { enable: true }, advanced: { updateOnContentResize: true, updateOnBrowserResize: true} });
+                $('#modalLookups').modal('hide');
+            }
+
+            function selectParameterList(Id) {
+                AddParameter(getArrayObject(Id, modelParameterLookup.array));
+                $(".ParameterList").mCustomScrollbar("update");
+                $(".ParameterList").mCustomScrollbar({ axis: "y", theme: "3d-dark", scrollButtons: { enable: true }, advanced: { updateOnContentResize: true, updateOnBrowserResize: true}});
+                $('#modalLookups').modal('hide');
+            }
+
+            function getArrayObject(id,array) {
+                for (var i = 0; i < array.length; i++) {
+                    if (array[i].Id == id) {
+                        return array[i];
+                    }
+                }
+                return null;
+            }
+
+            //window.addEventListener("beforeunload", function (e) {
+            //    var confirmationMessage = "\o/";
+
+            //    (e || window.event).returnValue = confirmationMessage; //Gecko + IE
+            //    return confirmationMessage;                            //Webkit, Safari, Chrome
+            //});
+
+            window.onbeforeunload = function (event) {
+                var message = 'Important: Please click on \'Save\' button to leave this page.';
+                if (typeof event == 'undefined') {
+                    event = window.event;
+                }
+                if (event) {
+                    event.returnValue = message;
+                }
+                return message;
+            };
+
+            $(function () {
+                $("a").not('#lnkLogOut').click(function () {
+                    window.onbeforeunload = null;
+                });
+                $(".btn").click(function () {
+                    window.onbeforeunload = null;
+                });
+            });
+
+
+            function keepSessionActive() {
+                var URL = '@Url.Action("Index","Session")';
+                callAjax(URL, "GET", null, function (result) {
+                    console.log(result);
+                })
+            }
+
+            $(document).ready(function () {
+
+              //  setInterval(keepSessionActive, 300000);
+
+                //$(window).on("beforeunload", function () {
+                //    return inFormOrLink ? "Please save before closing?" : null;
+                //})
+                      @(Session["Exception"]!=null? Session["Exception"]:"var xxx");
+
+
+                $.mCustomScrollbar.defaults.scrollButtons.enable = true;
+
+                $(".InputList").mCustomScrollbar({ theme: "3d-dark", axis: "yx", scrollButtons: { enable: true }, advanced: { updateOnContentResize: true, updateOnBrowserResize: true, autoExpandHorizontalScroll: true } });
+                $(".ParameterList").mCustomScrollbar({ theme: "3d-dark", axis: "y", scrollButtons: { enable: true }, advanced: { updateOnContentResize: true, updateOnBrowserResize: true } });
+                $(".EquipmentList").mCustomScrollbar({ theme: "3d-dark", axis: "y", scrollButtons: { enable: true }, advanced: { updateOnContentResize: true, updateOnBrowserResize: true } });
+                $(".OutputList").mCustomScrollbar({ theme: "3d-dark", axis: "y", scrollButtons: { enable: true }, advanced: { updateOnContentResize: true, updateOnBrowserResize: true} });
+
+                var url = '@Url.Action("GetJSON", "Home")';
+                callAjax(url, "GET", null, getJSONSuccess, getJSONSuccess);
+
+                $('#jstree')
+                    .on("select_node.jstree", function (e, data) {
+                        if (data.node.icon == "rootIcon" && data.node.id == "0") {
+                             var url='@Url.Action("GetRoot", "Home")';
+                                 callAjax(url, "GET", null, getRootSuccess, getFailure);
+                        }
+                        else if (data.node.original.node_name == "ManufacturingOperation") {
+                            var url='@Url.Action("GetOperationDetails", "Operation")';
+                            callAjax(url+"?ID=" + data.node.original.id + "&Name=" + data.node.original.name + "&nodeName=" + data.node.original.node_name + "&rootNodeName=" + $('#jstree').jstree(true).get_node('0').text, "GET", null, getNodeDetailsSuccess, getFailure);
+                        }
+                        else if (data.node.original.node_name == "ManufacturingProcedure") {
+                              var url='@Url.Action("GetProcedureDetails", "Procedure")';
+                            callAjax(url+"?ID=" + data.node.original.id + "&Name=" + data.node.original.name + "&nodeName=" + data.node.original.node_name + "&rootNodeName=" + $('#jstree').jstree(true).get_node('0').text, "GET", null, getNodeDetailsSuccess, getFailure);
+                        }
+                        else if (data.node.original.node_name == "ManufacturingProcess") {
+                              var url='@Url.Action("GetProcess", "Process")';
+                            $('#preloader').fadeIn('slow');
+                            callAjax(url + "?ID=" + data.node.original.id + "&Name=" + data.node.original.name + "&nodeName=" + data.node.original.node_name + "&rootNodeName=" + $('#jstree').jstree(true).get_node('0').text, "GET", null, getProcessSuccess, getFailure);
+                        }
+                    })
+                    .on('copy_node.jstree', function (e, data) {
+                        var CopyArray = { Copy: currentCopy, Paste: parentPaste };
+                         var url='@Url.Action("PasteNode", "NodeOperation")';
+                             callAjax(url, 'GET', { 'CopyArray': JSON.stringify(CopyArray) }, function (data) {
+                                  var url='@Url.Action("GetJSON", "Home")';
+                                      callAjax(url, "GET", null, reloadTree, getJSONSuccess);
+                        }, getFailure);
+                    })
+                    .on('load_node.jstree', function (e,data) {
+                        //$("#jstree").jstree("open_all");
+                        //enable hyperlink
+                              var url='@Url.Action("GetRoot", "Home")';
+                        callAjax(url, "GET", null, getRootSuccess, getFailure);
+                        sortTree();
+                        $('#tdTreeEx').css('display', 'table-cell');
+                        //$('#jstree').jstree(true).sort($('#jstree').jstree(true).get_node('1.1'), true);
+                        //$('#jstree').jstree(true).redraw_node($('#jstree').jstree(true).get_node('1.1'), true);
+
+                    });
+                  var url='@Url.Action("getUOMList", "Process")';
+                      callAjax(url, 'GET', null, function (data) {
+                    var uList = JSON.parse(data);
+                    $.each(uList, function (key, val) {
+                        var str = val.toHtmlEntities();
+                        //console.log(String.fromHtmlEntities(str));
+                        UOMLIST.push(val);
+                    })
+                }, getFailure);
+
+                $(".sideBarScrollY").mCustomScrollbar({ axis: "y", theme: "3d-dark", scrollButtons: { enable: true }, advanced: { updateOnContentResize: true, updateOnBrowserResize: true } });
+                $(".sideBarScrollX").mCustomScrollbar({ axis: "x", theme: "3d-dark", scrollButtons: { enable: true }, advanced: { updateOnContentResize: true, updateOnBrowserResize: true, autoExpandHorizontalScroll: true } });
+
+            });
+
+            //$(document).keypress(function (e) {
+            //    if (e.which == 13 && e.target.tagName != 'input') {
+            //        if (e.target.id = "txtSearch") {
+            //            $("#" + e.target.id).siblings().click()
+            //        }
+            //        return false;
+            //    }
+            //});
+
+            String.prototype.toHtmlEntities = function () {
+                return this.replace(/./gm, function (s) {
+                    return "&#" + s.charCodeAt(0) + ";";
+                });
+            };
+
+
+            String.fromHtmlEntities = function (string) {
+                return (string + "").replace(/&#\d+;/gm, function (s) {
+                    return String.fromCharCode(s.match(/\d+/gm)[0]);
+                })
+            };
+
+
+            function getParameterMAX() {
+                var pID = [];
+                var paramID = 0;
+                for (var i = 0; i < $("#tblParameter").find('tbody').find('tr').length; i++) {
+                    if ($($("#tblParameter").find('tbody').find('tr')[i])[0].id != "") {
+                        if ($($($("#tblParameter").find('tbody').find('tr')[i]).find('td')[0]).find('input').val() != "") {
+                            pID.push($($($("#tblParameter").find('tbody').find('tr')[i]).find('td')[0]).find('input').val().replace("P0", ""));
+                        }
+                    }
+                }
+                if (pID.length > 0) {
+                    paramID = "P0" + (parseInt(Math.max.apply(Math, pID)) + 1);
+                } else {
+                    paramID = "P01";
+                }
+                return paramID;
+            }
+
+            function getEquipmentMAX() {
+                var pID = 0;
+                for (var i = 0; i < $("#tblEquipment").find('tbody').find('tr').length; i++) {
+                    if ($($("#tblEquipment").find('tbody').find('tr')[i])[0].id != "") {
+                        if ($($($("#tblEquipment").find('tbody').find('tr')[i]).find('td')[0]).find('input').val() != "") {
+                            pID = $($($("#tblEquipment").find('tbody').find('tr')[i]).find('td')[0]).find('input').val().replace("E0", "");
+                        }
+                    }
+                }
+                pID = "E0" + (parseInt(pID) + 1);
+                return pID;
+            }
+
+
+
+            function modParameter() {
+                   var url='@Url.Action("getMAXIDs", "Process")';
+
+                        callAjax(url + "?type=Parameter", "GET", null, function (data) {
+
+                           $("#txtId").val(getParameterMAX());
+                           $("#txtName").val('');
+                           $("#txtUOM").val('');
+                           $("#txtMin").val('');
+                           $("#txtMax").val('');
+                           $("#txtTarget").val('');
+                           $("#radRange").prop('checked', false);
+                           $("#radValue").prop('checked', false);
+                           $("#modalParamTR2").removeClass().addClass('hiddenClass');
+                           $("#modalParamTR3").removeClass().addClass('hiddenClass');
+                           $('#txtName').on('keypress blur', function () {
+                               $(this).val($(this).val().toUpperCase());
+                           });
+                           $("#modalParameter").modal('show');
+                       }, getFailure)
+
+            }
+
+            function modOutput() {
+                $("#modalOutput").modal('show');
+                 var url='@Url.Action("getMAXIDs", "Process")';
+                     callAjax(url+"?type=Output", "GET", null, function (data) {
+                    $("#txtOutId").val(data);
+                         //$("#txtMaterialNumber").val('');
+                         $("#txtMaterialName").val('');
+                         $("#txtQTYValue").val('');
+                         $("#txtQTYUOM").val('');
+                         $("#txtFunctionalCategory").val('');
+                         $('#txtMaterialName').on('keypress blur', function () {
+                             $(this).val($(this).val().toUpperCase());
+                         });
+                }, getFailure)
+            }
+
+            function AddParameter(data) {
+                if (data != null && data != undefined) {
+                       var url='@Url.Action("getMAXIDs", "Process")';
+                    callAjax(url+"?type=Parameter", "GET", null, function (paramVal) {
+                        paramVal = getParameterMAX();
+                        $("#tblParameter").find('.hiddenClass').first().find('[id*="Id"]').val(paramVal);
+                        $("#tblParameter").find('.hiddenClass').first().find('[id*="Name"]').val(data.name);
+                        $("#tblParameter").find('.hiddenClass').first().find('[id*="UOM"]').val('');//Need to add exact UOM
+                        $("#tblParameter").find('.hiddenClass').first().find('[id*="Id"]').attr('readonly', 'true');
+
+                        if (data.Value_Type == "RANGE") {
+                            $("#tblParameter").find('.hiddenClass').first().find('[id*="Min"]').val(data.Min);
+                            $("#tblParameter").find('.hiddenClass').first().find('[id*="Max"]').val(data.Max);
+                            $("#tblParameter").find('.hiddenClass').first().find('[id*="VType"]').val("RANGE");
+                            $("#tblParameter").find('.hiddenClass').first().find('[id*="Min"]').removeClass('txtDisabled');
+                            $("#tblParameter").find('.hiddenClass').first().find('[id*="Max"]').removeClass('txtDisabled');
+                            $("#tblParameter").find('.hiddenClass').first().find('[id*="Target"]').removeClass('txtDisabled');
+                        } else {
+                            $("#tblParameter").find('.hiddenClass').first().find('[id*="Target"]').val(data.Target);
+                            $("#tblParameter").find('.hiddenClass').first().find('[id*="VType"]').val("VALUE");
+                            $("#tblParameter").find('.hiddenClass').first().find('[id*="Min"]').addClass('txtDisabled');
+                            $("#tblParameter").find('.hiddenClass').first().find('[id*="Max"]').addClass('txtDisabled');
+                            $("#tblParameter").find('.hiddenClass').first().find('[id*="Target"]').removeClass('txtDisabled');
+                        }
+                        $("#parameterUL").append('<li><a class="dropdown-item" href="Javascript:selectInput(\'' + paramVal + '\',\'Parameter\');">' + paramVal + '</a></li>');
+                        $("#tblParameter").find('.hiddenClass').first().removeClass('hiddenClass');
+                        $('#modalParameter').modal('hide');
+                        $(".ParametertList").mCustomScrollbar({ axis: "y", theme: "3d-dark", scrollButtons: { enable: true }, advanced: { updateOnContentResize: true, updateOnBrowserResize: true } });
+
+                    }, getFailure)
+
+                }
+                else {
+                    //callAjax("../Process/getMAXIDs?type=Parameter", "GET", null, function (data) {
+                        $("#tblParameter").find('.hiddenClass').first().find('[id*="Id"]').val($('#txtId').val());
+                    $("#tblParameter").find('.hiddenClass').first().find('[id*="Name"]').val($("#txtName").val());
+                    $("#tblParameter").find('.hiddenClass').first().find('[id*="Name"]').removeAttr("readonly");
+                        $("#parameterUL").append('<li><a class="dropdown-item" href="Javascript:selectInput(\'' + $('#txtId').val() + '\',\'Parameter\');">' + $('#txtId').val() + '</a></li>');
+                        $("#tblParameter").find('.hiddenClass').first().removeClass('hiddenClass');
+                    $(".ParameterList").mCustomScrollbar("update");
+                    $(".ParameterList").mCustomScrollbar({ axis: "y", theme: "3d-dark", scrollButtons: { enable: true }, advanced: { updateOnContentResize: true, updateOnBrowserResize: true } });
+
+                    $('#modalParameter').modal('hide');
+                    //}, getFailure)
+                }
+
+                $('.parameterList').on('keypress blur', function () {
+                    $(this).val($(this).val().toUpperCase());
+                });
+
+                $('input[id*="Target"]').on('keypress blur', function () {
+                    $(this).val($(this).val().toUpperCase());
+                });
+
+                $('input[id*="UOM"]').on('keypress blur', function () {
+                    $(this).val($(this).val().toUpperCase());
+                });
+
+
+
+                //$(".parameterList").keypress(function (event) {
+                //    $(this).val($(this).val().toUpperCase());
+                //});
+            }
+
+            function AddEquipment(data) {
+                if (data != null && data != undefined) {
+                     var url='@Url.Action("getMAXIDs", "Process")';
+                    callAjax(url + "?type=Equipment", "GET", null, function (paramVal) {
+                        paramVal = getEquipmentMAX();
+                        $("#tblEquipment").find('.hiddenClass').first().find('[id*="Id"]').val(paramVal);
+                        $("#tblEquipment").find('.hiddenClass').first().find('[id*="Name"]').val($("<textarea/>").html(data.name).val());
+                        $("#tblEquipment").find('.hiddenClass').first().find('[id*="EQNumber"]').val(data.number);//Need to add exact UOM
+                        $("#equipmentUL").append('<li><a class="dropdown-item" href="Javascript:selectInput(\'' + paramVal + '\',\'Equipment\');">' + paramVal + '</a></li>');
+                        $("#tblEquipment").find('.hiddenClass').first().removeClass('hiddenClass');
+                        $(".EquipmentList").mCustomScrollbar("update");
+                        $(".EquipmentList").mCustomScrollbar({ axis: "y", theme: "3d-dark", scrollButtons: { enable: true }, advanced: { updateOnContentResize: true, updateOnBrowserResize: true } });
+
+                    }, getFailure)
+                }
+
+
+            }
+
+            function sortNumber(a, b) {
+                return a - b;
+            }
+
+            function AddInput(data) {
+                if (data != null && data != undefined) {
+                      var url='@Url.Action("getMAXIDs", "Process")';
+                          callAjax(url+"?type=Input", "GET", null, function (paramVal) {
+                        $("#tblInputs").find('.hiddenClass').first().find('[id*="Id"]').val(paramVal);
+                              var table = $("#tblInputs tbody");
+                              var IdValue = 0;
+                              var flag = false;
+                              var IdsArray = [];
+                              table.find('tr').each(function (i, el) {
+                                  var $tds = $(this).find('td');
+                                  if ($tds.length > 0) {
+                                      IdValue=$tds.eq(0).find('input').val();
+                                      IdsArray.push(IdValue.substring(2, IdValue.length));
+                                      if (IdValue == paramVal && $tds.eq(1).find('input').val() != "") {
+                                          flag = true;
+                                      }
+                                  }
+
+                              });
+
+                              if (flag) {
+                                  IdValue = Math.max.apply(Math, IdsArray);
+                                  IdValue++;
+                                  paramVal = 'I0' + IdValue;
+                                  $("#tblInputs").find('.hiddenClass').first().find('[id*="Id"]').val(paramVal);
+                              }
+
+                        $("#tblInputs").find('.hiddenClass').first().find('[id*="Name"]').val(data.Name);
+                        $("#tblInputs").find('.hiddenClass').first().find('[id*="ANumber"]').val(data.Number);
+                              $("#tblInputs").find('.hiddenClass').first().find('[id*="UOM"]').first().val(data.UOM);
+                              $("#tblInputs").find('.hiddenClass').first().find('[id*="Source"]').val(data.Source);
+                        if (data.UOM != "")
+                            $("#tblInputs").find('.hiddenClass').first().find('[id*="UOM"]').first().attr('readonly', 'true');
+                        $("#inputUL").append('<li><a class="dropdown-item" href="Javascript:selectInput(\'' + paramVal + '\',\'Input\');">' + paramVal + '</a></li>');
+                              $("#tblInputs").find('.hiddenClass').first().removeClass('hiddenClass');
+                              $(".InputList").mCustomScrollbar("update");
+                              $(".InputList").mCustomScrollbar({ axis: "yx", theme: "3d-dark", scrollButtons: { enable: true }, advanced: { updateOnContentResize: true, updateOnBrowserResize: true, autoExpandHorizontalScroll: true } });
+                    }, getFailure)
+                }
+            }
+
+            function AddOutput(data) {
+                if (data != null && data != undefined) {
+                     var url='@Url.Action("getMAXIDs", "Process")';
+                    callAjax(url + "?type=Output", "GET", null, function (paramVal) {
+                        paramVal = paramVal.replace("W", "O");
+                        $("#tblOutput").find('.hiddenClass').first().find('[id*="Id"]').val(paramVal);
+                        $("#tblOutput").find('.hiddenClass').first().find('[id*="Name"]').val(data.Name);
+                        $("#tblOutput").find('.hiddenClass').first().find('[id*="Name"]').attr('readonly','true');
+                        $("#tblOutput").find('.hiddenClass').first().find('[id*="ANumber"]').val(data.Number);
+                        $("#tblOutput").find('.hiddenClass').first().find('[id*="Type"]').val(data.Type);
+                        $("#tblOutput").find('.hiddenClass').first().find('[id*="UOM"]').val(data.UOM);
+                        $("#tblOutput").find('.hiddenClass').first().find('[id*="UOM"]').attr('readonly', 'true');
+                        //$("#outputUL").append('<li><a class="dropdown-item" href="Javascript:selectInput(\'' + paramVal + '\',\'Output\');">' + paramVal + '</a></li>');
+                        $("#tblOutput").find('.hiddenClass').first().removeClass('hiddenClass');
+                        $('#modalOutput').modal('hide');
+                        $(".OutputList").mCustomScrollbar("update");
+                        $(".OutputList").mCustomScrollbar({ axis: "y", theme: "3d-dark", scrollButtons: { enable: true }, advanced: { updateOnContentResize: true, updateOnBrowserResize: true}});
+
+                    }, getFailure)
+                                   } else {
+                    //callAjax("../Process/getMAXIDs?type=Output", "GET", null, function (data) {
+                        $("#tblOutput").find('.hiddenClass').first().find('[id*="Id"]').val($("#txtOutId").val());
+                        //$("#tblOutput").find('.hiddenClass').first().find('[id*="ANumber"]').val($("#txtMaterialNumber").val());
+                        $("#tblOutput").find('.hiddenClass').first().find('[id*="Name"]').val($("#txtMaterialName").val().toUpperCase());
+                        //$("#outputUL").append('<li><a class="dropdown-item" href="Javascript:selectInput(\'' + $("#txtOutId").val() + '\',\'Output\');">' + $("#txtOutId").val() + '</a></li>');
+                        $("#tblOutput").find('.hiddenClass').first().removeClass('hiddenClass');
+                        $('#modalOutput').modal('hide');
+                        $(".OutputList").mCustomScrollbar("update");
+                        $(".OutputList").mCustomScrollbar({ axis: "y", theme: "3d-dark", scrollButtons: { enable: true }, advanced: { updateOnContentResize: true, updateOnBrowserResize: true } });
+
+                    //}, getFailure)
+
+                                }
+
+
+            }
+
+            function DeleteLI(LI,value) {
+                for (var i = 0; i < LI.length; i++) {
+                    if ($($(LI)[i]).find('a').text() == value) {
+                        $($(LI)[i]).remove();
+                    }
+                }
+            }
+
+            function InsertControlPoints() {
+                $("#tblControlPoint").find('.hiddenClass').first().removeClass();
+            }
+
+            function InsertSpecialPoints() {
+                $("#tblSpecialInstruction").find('.hiddenClass').first().removeClass();
+
+            }
+
+            function arrayContains(needle, arrhaystack) {
+                return (arrhaystack.indexOf(needle) > -1);
+            }
+
+            function DeleteParameter(ctrl) {
+                var textBx = getFromBetween.get($("#textBx1").val(), "<<", ">>");
+                //if (arrayContains($("#" + ctrl).closest('tr').find('td').find('input').val(), textBx)) {
+                ////    $.alert({
+                ////        title: 'Error',
+                ////        icon: 'fa fa-error',
+                ////        type: 'red',
+                ////        content: ' Please remove references of ' + $("#" + ctrl).closest('tr').find('td').find('input').val()
+                ////    });
+                ////} else {
+                //    $("#textBx1").val($("#textBx1").val().replace('<<' + $("#" + ctrl).closest('tr').find('td').find('input').val() + '>>', ''));
+                //    DeleteLI($("#parameterUL li"), $("#" + ctrl + "").closest('tr').find('td').find('input').first().val());
+                //    $("#" + ctrl + "").closest('tr').find('td').find('input').val('');
+                //    $('#' + ctrl).closest('table').moveRow($('#' + ctrl).closest('tr')[0].rowIndex, $('#' + ctrl).closest('table').find('.hiddenClass').first()[0].rowIndex - 1);
+                //    $("#" + ctrl).closest('tr').addClass('hiddenClass');
+                //}
+                $("#textBx1").val($("#textBx1").val().replace('<<' + $("#" + ctrl).closest('tr').find('td').find('input').val() + '>>', ''));
+                DeleteLI($("#parameterUL li"), $("#" + ctrl + "").closest('tr').find('td').find('input').first().val());
+                $("#" + ctrl + "").closest('tr').find('td').find('input').val('');
+                $('#' + ctrl).closest('table').moveRow($('#' + ctrl).closest('tr')[0].rowIndex, $('#' + ctrl).closest('table').find('.hiddenClass').first()[0].rowIndex - 1);
+                $("#" + ctrl).closest('tr').addClass('hiddenClass');
+                ExtractFromGetSuccess($("#textBx1").val());
+            }
+
+            function DeleteOutput(ctrl) {
+                var textBx = getFromBetween.get($("#textBx1").val(), "<<", ">>");
+                //if (arrayContains($("#" + ctrl).closest('tr').find('td').find('input').val(), textBx)) {
+                ////    $.alert({
+                ////        title: 'Error',
+                ////        icon: 'fa fa-error',
+                ////        type: 'red',
+                ////        content: ' Please references of ' + $("#" + ctrl).closest('tr').find('td').find('input').val()
+                ////    });
+                ////} else {
+                //    $("#textBx1").val($("#textBx1").val().replace('<<' + $("#" + ctrl).closest('tr').find('td').find('input').val() + '>>', ''));
+                //    DeleteLI($("#outputUL li"), $("#" + ctrl + "").closest('tr').find('td').find('input').first().val());
+                //    $("#" + ctrl + "").closest('tr').find('td').find('input').val('');
+                //    $('#' + ctrl).closest('table').moveRow($('#' + ctrl).closest('tr')[0].rowIndex, $('#' + ctrl).closest('table').find('.hiddenClass').first()[0].rowIndex - 1);
+                //    $("#" + ctrl).closest('tr').addClass('hiddenClass');
+                //}
+                $("#textBx1").val($("#textBx1").val().replace('<<' + $("#" + ctrl).closest('tr').find('td').find('input').val() + '>>', ''));
+                DeleteLI($("#outputUL li"), $("#" + ctrl + "").closest('tr').find('td').find('input').first().val());
+                $("#" + ctrl + "").closest('tr').find('td').find('input').val('');
+                $('#' + ctrl).closest('table').moveRow($('#' + ctrl).closest('tr')[0].rowIndex, $('#' + ctrl).closest('table').find('.hiddenClass').first()[0].rowIndex - 1);
+                $("#" + ctrl).closest('tr').addClass('hiddenClass');
+                ExtractFromGetSuccess($("#textBx1").val());
+            }
+
+            function DeleteControlPoints(ctrl) {
+                //$("#" + ctrl + "").find('input').val('');
+                $("#" + ctrl + "").closest('tr').find('td').find('input').val('');
+                $('#' + ctrl).closest('table').closest('tbody').moveRow($('#' + ctrl).closest('tr')[0].rowIndex, $('#' + ctrl).closest('table').closest('tbody').find('.hiddenClass').first()[0].rowIndex - 1);
+                $("#" + ctrl).closest('tr').addClass('hiddenClass');
+            }
+
+            function DeleteControlPointsNew(ctrl) {
+                //$("#" + ctrl + "").find('input').val('');
+                $("#" + ctrl + "").closest('tr').find('td').find('input').val('');
+                $('#' + ctrl).closest('table').closest('tbody').moveRow($('#' + ctrl).closest('tr')[0].rowIndex, $('#' + ctrl).closest('table').closest('tbody').find('.hiddenClass').first()[0].rowIndex - 1);
+                $("#" + ctrl).closest('tr').addClass('hiddenClass');
+                var URL='@Url.Action("DeleteCP", "Home")';
+                callAjax(URL + "?Id=" + ctrl, "GET", null, function (paramVal) {
+                        //var url='@Url.Action("GetRoot", "Home")';
+                        //callAjax(url, "GET", null, getRootSuccess, getFailure);
+                }, getFailure)
+            }
+
+            function DeleteSpecialPointsNew(ctrl) {
+                //$("#" + ctrl + "").find('input').val('');
+                $("#" + ctrl + "").closest('tr').find('textarea').val('');
+                $('#' + ctrl).closest('table').closest('tbody').moveRow($('#' + ctrl).closest('tr')[0].rowIndex, $('#' + ctrl).closest('table').closest('tbody').find('.hiddenClass').first()[0].rowIndex - 1);
+                $("#" + ctrl).closest('tr').addClass('hiddenClass');
+                var URL='@Url.Action("DeleteSI", "Home")';
+                callAjax(URL + "?Id=" + ctrl, "GET", null, function (paramVal) {
+                        //var url='@Url.Action("GetRoot", "Home")';
+                        //callAjax(url, "GET", null, getRootSuccess, getFailure);
+                }, getFailure)
+            }
+
+
+            function DeleteSpecialInstruction(ctrl) {
+                //$("#" + ctrl + "").find('input').val('');
+                $("#" + ctrl + "").closest('tr').find('textarea').val('');
+                $('#' + ctrl).closest('table').closest('tbody').moveRow($('#' + ctrl).closest('tr')[0].rowIndex, $('#' + ctrl).closest('table').closest('tbody').find('.hiddenClass').first()[0].rowIndex - 1);
+                $("#" + ctrl).closest('tr').addClass('hiddenClass');
+            }
+
+
+
+            function DeleteInputs(ctrl) {
+                var textBx = getFromBetween.get($("#textBx1").val(), "<<", ">>");
+
+                //if (arrayContains($("#" + ctrl).closest('tr').find('td').find('input').val(), textBx)) {
+                ////    $.alert({
+                ////        title: 'Error',
+                ////        icon: 'fa fa-error',
+                ////        type: 'red',
+                ////        content: ' Please references of ' + $("#" + ctrl).closest('tr').find('td').find('input').val()
+                ////    });
+                ////} else {
+                //    $("#textBx1").val($("#textBx1").val().replace('<<' + $("#" + ctrl).closest('tr').find('td').find('input').val() + '>>', ''));
+                //    DeleteLI($("#inputUL li"), $("#" + ctrl + "").closest('tr').find('td').find('input').first().val());
+                //    $("#" + ctrl + "").closest('tr').find('td').find('input').val('');
+                //    $('#' + ctrl).closest('table').moveRow($('#' + ctrl).closest('tr')[0].rowIndex, $('#' + ctrl).closest('table').find('.hiddenClass').first()[0].rowIndex - 1);
+                //    $("#" + ctrl).closest('tr').addClass('hiddenClass');
+                //}
+                $("#textBx1").val($("#textBx1").val().replace('<<' + $("#" + ctrl).closest('tr').find('td').find('input').val() + '>>', ''));
+                DeleteLI($("#inputUL li"), $("#" + ctrl + "").closest('tr').find('td').find('input').first().val());
+                $("#" + ctrl + "").closest('tr').find('td').find('input').val('');
+                $('#' + ctrl).closest('table').moveRow($('#' + ctrl).closest('tr')[0].rowIndex, $('#' + ctrl).closest('table').find('.hiddenClass').first()[0].rowIndex - 1);
+                $("#" + ctrl).closest('tr').addClass('hiddenClass');
+                ExtractFromGetSuccess($("#textBx1").val());
+                       }
+
+            function DeleteEquipment(ctrl) {
+                var textBx = getFromBetween.get($("#textBx1").val(), "<<", ">>");
+                //if (arrayContains($("#" + ctrl).closest('tr').find('td').find('input').val(), textBx)) {
+                ////    $.alert({
+                ////        title: 'Error',
+                ////        icon: 'fa fa-error',
+                ////        type: 'red',
+                ////        content: ' Please references of ' + $("#" + ctrl).closest('tr').find('td').find('input').val()
+                ////    });
+                ////} else {
+                //    $("#textBx1").val($("#textBx1").val().replace('<<' + $("#" + ctrl).closest('tr').find('td').find('input').val() + '>>', ''));
+                //    DeleteLI($("#equipmentUL li"), $("#" + ctrl + "").closest('tr').find('td').find('input').first().val());
+                //    $("#" + ctrl + "").closest('tr').find('td').find('input').val('');
+                //    $('#' + ctrl).closest('table').moveRow($('#' + ctrl).closest('tr')[0].rowIndex, $('#' + ctrl).closest('table').find('.hiddenClass').first()[0].rowIndex - 1);
+                //    $("#" + ctrl).closest('tr').addClass('hiddenClass');
+                //}
+                $("#textBx1").val($("#textBx1").val().replace('<<' + $("#" + ctrl).closest('tr').find('td').find('input').val() + '>>', ''));
+                DeleteLI($("#equipmentUL li"), $("#" + ctrl + "").closest('tr').find('td').find('input').first().val());
+                $("#" + ctrl + "").closest('tr').find('td').find('input').val('');
+                $('#' + ctrl).closest('table').moveRow($('#' + ctrl).closest('tr')[0].rowIndex, $('#' + ctrl).closest('table').find('.hiddenClass').first()[0].rowIndex - 1);
+                $("#" + ctrl).closest('tr').addClass('hiddenClass');
+                ExtractFromGetSuccess($("#textBx1").val());
+            }
+
+            function reloadTree(result) {
+                $('#jstree').jstree(true).settings.core.data = result.parentXML;
+                $('#jstree').jstree(true).refresh();
+              }
+
+            function sortTree() {
+                $.each($('#jstree').jstree(true).get_json('#')[0].children,function (index, parent) {
+                    $('#jstree').jstree(true).get_node(parent.id).children.sort(function (a, b) {
+                            var strA = a.split('.').pop();
+                            var strB = b.split('.').pop();
+
+                            if (parseInt(strA) < parseInt(strB)) return -1;
+                            if (parseInt(strA) > parseInt(strB)) return 1;
+                            return 0;
+                        });
+                });
+                $.each($('#jstree').jstree(true).get_json('#')[0].children, function (index, parent) {
+                    $.each($('#jstree').jstree(true).get_json(parent).children, function (index, child) {
+                        $('#jstree').jstree(true).get_node(child.id).children.sort(function (a, b) {
+                            var strA = a.split('.').pop();
+                            var strB = b.split('.').pop();
+
+                            if (parseInt(strA) < parseInt(strB)) return -1;
+                            if (parseInt(strA) > parseInt(strB)) return 1;
+                            return 0;
+                        });
+                    });
+                });
+            }
+
+
+            function getJSONSuccess(result) {
+                $('#jstree').jstree({
+                    'core': {
+                        'check_callback': true,
+                        "animation": 0,
+                        "expand_selected_onload": false,
+                        "data": result.parentXML
+                    },
+                    "sort": function (a, b) { return (parseInt(a) < parseInt(b)) ? -1 : 1; },
+                    "plugins": ["themes", "json_data", "ui", "cookies", "crrm", "sort"]
+                });
+                $('#jstree').jstree(true).refresh();
+            }
+
+            function getRootSuccess(data) {
+                var $detailDiv = $('#details');
+                $detailDiv.html(data);
+                $("input[id*='IsApplicable'").change(function () {
+                    var ischecked = $(this).is(':checked');
+                    if (ischecked)
+                        $("#tblControlPoint").css('display', 'table');
+                    else {
+                       var table = $("#tblControlPoint tbody");
+                        table.find('tr').each(function (i, el) {
+                            //var $tds = $(this).find('td'),
+                            //if ($tds.length > 0) {
+                            //    $tds.eq(0).find('input').val(null);
+                            //    $tds.eq(1).find('input').val(null);
+                            //    $tds.eq(2).find('input').val(null);
+                            //    $tds.eq(3).find('input').val(null);
+                            //}
+                            if ($(this).find('input').length > 0) {
+                                $(this).find('input').val(null);
+                            }
+                        });
+
+                        $("#tblControlPoint").css('display', 'none');
+
+                    }});
+
+                $('#btnSubmit').click(function (e) {
+                    var URL = null;
+                    var formData = null;
+                    e.preventDefault();
+
+                    if (e.currentTarget.form.id == "SaveProcedure") {
+                        URL = "@Url.Action("SaveNodeName", "Procedure")";
+                        formData = $("#SaveProcedure").serialize();
+                    } else if (e.currentTarget.form.id == "SaveOperation") {
+                        URL = "@Url.Action("SaveNodeName", "Operation")";
+                        formData = $("#SaveOperation").serialize()
+                    } else if (e.currentTarget.form.id == "SaveRoot") {
+                        URL = "@Url.Action("SaveNodeName", "Home")";
+                        formData = $("#SaveRoot").serialize()
+                    }else if (e.currentTarget.form.id == "SaveProcess") {
+                        URL = "@Url.Action("SaveNodeName", "Process")";
+                        formData = $("#SaveProcess").serialize()
+                        if (!validateProcess()) {
+                            return;
+                        }
+                    }
+
+                    setInterval(callSave(formData, URL), 1000);
+
+                })
+
+
+            }
+
+            function callSave(formData,URL) {
+                 $.ajax({
+                        type: 'POST',
+                        url: URL,
+                        data: formData + '&MFR_NO=' + getSearchParams('MFR_NO'),
+                        async: false,
+                        success: function (result) {
+                            if (result == "Success") {
+                                var url = '@Url.Action("GetJSON", "Home")';
+                                alertify.set('notifier', 'position', 'top-right');
+                                alertify.notify('Saved Successfully', 'success', 2);
+                                callAjax("GetJSON", "GET", null, reloadTree, getJSONSuccess);
+							} else {
+								if (result.split('||').length > 0) {
+									alertify.set('notifier', 'position', 'top-center');
+									alertify.notify('Could not be saved. There is a missing"<<" or ">>". Please check the Process Details', 'error', 5);
+								}
+								else {
+									alertify.notify('Please try again', 'error', 2);
+								}
+							}
+                            }
+                    })
+            }
+
+            function getSearchParams(k) {
+                var p = {};
+                location.search.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (s, k, v) { p[k] = v })
+                return k ? p[k] : p;
+            }
+
+            function getFailure() {
+
+            }
+
+            function validateProcess() {
+                var InputTxt = [];
+                var OutputTxt = [];
+                var EquipmentTxt = [];
+                var ParameterTxt = [];
+                var textBx = [];
+                var flag = true;
+
+
+                $.each($("#tblInputs").find('tr'), function (i, value) {
+                    if ($(this).find('td').first().length>0) {
+                        if ($(this).find('td').first().text() == "") {
+                            if ($(this).find('td').first().find('input').val().trim() != "") {
+                                InputTxt.push($(this).find('td').first().find('input').val());
+                            }
+                        } else {
+                            if ($(this).find('td').first().text().trim() != "") {
+                                InputTxt.push($(this).find('td').first().text());
+                            }
+                        }
+                    }
+                })
+
+
+                $.each($("#tblParameter").find('tr'), function (i, value) {
+                    if ($(this).find('td').first().length > 0) {
+                        if ($(this).find('td').first().text() == "") {
+                            if ($(this).find('td').first().find('input').val().trim() != "") {
+                                ParameterTxt.push($(this).find('td').first().find('input').val());
+                            }
+                        } else {
+                            if ($(this).find('td').first().text().trim()!="") {
+                            ParameterTxt.push($(this).find('td').first().text());
+                            }
+                        }
+                    }
+                })
+
+                $.each($("#tblEquipment").find('tr'), function (i, value) {
+                    if ($(this).find('td').first().length > 0) {
+                        if ($(this).find('td').first().text() == "") {
+                            if ($(this).find('td').first().find('input').val().trim() != "") {
+                                EquipmentTxt.push($(this).find('td').first().find('input').val());
+                            }
+                        } else {
+                            if ($(this).find('td').first().text().trim()!="") {
+                                EquipmentTxt.push($(this).find('td').first().text());
+                            }}
+                    }
+                })
+
+                $.each($("#tblOutput").find('tr'), function (i, value) {
+                    if ($(this).find('td').first().length > 0) {
+                        if ($(this).find('td').first().text() == "") {
+                            if ($(this).find('td').first().find('input').val().trim() != "") {
+                                OutputTxt.push($(this).find('td').first().find('input').val());
+                            }
+                        } else {
+                            if ($(this).find('td').first().text().trim()!="") {
+                            OutputTxt.push($(this).find('td').first().text());
+                        }}
+                    }
+                })
+
+
+
+
+
+
+                if ($('textarea[id*="textBx1"]').val() == "") {
+                    flag=true;
+                }
+                textBx = getFromBetween.get($('textarea[id*="textBx1"]').val(), "<<", ">>");
+                if (textBx.length==0) {
+                    flag = true;
+                } else {
+                    textBx = textBx.filter(function (n) { return !this.has(n) }, new Set(InputTxt));
+                    textBx = textBx.filter(function (n) { return !this.has(n) }, new Set(ParameterTxt));
+                    textBx = textBx.filter(function (n) { return !this.has(n) }, new Set(EquipmentTxt));
+                    textBx = textBx.filter(function (n) { return !this.has(n) }, new Set(OutputTxt));
+                    if (textBx.length > 0) {
+                        flag= true;
+                    }
+                }
+
+                return flag;
+            }
+
+            function getNodeDetailsSuccess(data) {
+                var $detailDiv = $('#details');
+                $detailDiv.html(data);
+
+                $('#btnSubmit').click(function (e) {
+                    var URL = null;
+                    var formData = null;
+                    e.preventDefault();
+
+                    if (e.currentTarget.form.id == "SaveProcedure") {
+                        URL = "@Url.Action("SaveNodeName", "Procedure")";
+                        formData = $("#SaveProcedure").serialize();
+                    } else if (e.currentTarget.form.id == "SaveOperation") {
+                        URL = "@Url.Action("SaveNodeName", "Operation")";
+                        formData = $("#SaveOperation").serialize()
+                    } else if (e.currentTarget.form.id == "SaveRoot") {
+                        URL = "@Url.Action("SaveNodeName", "Home")";
+                        formData = $("#SaveRoot").serialize()
+                    }else if (e.currentTarget.form.id == "SaveProcess") {
+                        URL = "@Url.Action("SaveNodeName", "Process")";
+                        formData = $("#SaveProcess").serialize()
+                        if (!validateProcess()) {
+                            return;
+                        }
+                    }
+                    setInterval(callSave(formData, URL), 1000);
+
+
+                })
+
+
+                $('.toUpper').on('keypress blur', function () {
+                    $(this).val($(this).val().toUpperCase());
+                });
+            }
+
+           
+
+
+            function getProcessSuccess(data) {
+                var $detailDiv = $('#details');
+                $detailDiv.html(data);
+                $(".InputList").mCustomScrollbar("update");
+                $(".InputList").mCustomScrollbar({ axis: "yx", theme: "3d-dark", scrollButtons: { enable: true }, advanced: { updateOnContentResize: true, updateOnBrowserResize: true, autoExpandHorizontalScroll: true } });
+                $(".ParameterList").mCustomScrollbar("update");
+                $(".ParameterList").mCustomScrollbar({ theme: "3d-dark", axis: "y", scrollButtons: { enable: true, advanced: { updateOnContentResize: true, updateOnBrowserResize: true } } });
+                $(".EquipmentList").mCustomScrollbar("update");
+                $(".EquipmentList").mCustomScrollbar({ theme: "3d-dark", axis: "y", scrollButtons: { enable: true, advanced: { updateOnContentResize: true, updateOnBrowserResize: true } } });
+                $(".OutputList").mCustomScrollbar("update");
+                $(".OutputList").mCustomScrollbar({ theme: "3d-dark", axis: "y", scrollButtons: { enable: true }, advanced: { updateOnContentResize: true, updateOnBrowserResize: true } });
+
+                $('#textBx1').keyup(function () {
+                    var url='@Url.Action("ExtractFromGet", "Process")';
+                    callAjax(url, "POST", { text: JSON.stringify($('#textBx1').val()) }, ExtractFromGetSuccess, getFailure)
+                });
+
+
+
+
+
+                $('.toUpper').on('keypress blur', function () {
+                    $(this).val($(this).val().toUpperCase());
+                });
+
+
+                $('input[type="radio"]').on('change', function (e) {
+                    if (e.currentTarget.id == "radValue") {
+                        $("#modalParamTR1").removeClass().addClass('hiddenClass');
+                        $("#modalParamTR2").removeClass().addClass('hiddenClass');
+                        $("#modalParamTR3").removeClass();
+                    } else {
+                        $("#modalParamTR1").removeClass();
+                        $("#modalParamTR2").removeClass();
+                        $("#modalParamTR3").removeClass().addClass('hiddenClass');
+                    }
+                });
+
+                $('.valueType').change(function () {
+                    var data = $(this).val();
+                    if (data == "VALUE") {
+                        $(this).closest('tr').find('td').each(function (index, elem) {
+                            if ($(this).find('[id*="Min"]').length > 0)
+                                $(this).find('[id*="Min"]').removeClass('txtDisabled').addClass('txtDisabled');
+                            if ($(this).find('[id*="Max"]').length > 0)
+                                $(this).find('[id*="Max"]').removeClass('txtDisabled').addClass('txtDisabled');
+                            if ($(this).find('[id*="Target"]').length > 0)
+                                $(this).find('[id*="Target"]').removeClass('txtDisabled');
+                        });
+                    } else {
+                        $(this).closest('tr').find('td').each(function (index, elem) {
+                            if ($(this).find('[id*="Min"]').length > 0)
+                                $(this).find('[id*="Min"]').removeClass('txtDisabled');
+                            if ($(this).find('[id*="Max"]').length > 0)
+                                $(this).find('[id*="Max"]').removeClass('txtDisabled');
+                            if ($(this).find('[id*="Target"]').length > 0)
+                                $(this).find('[id*="Target"]').removeClass('txtDisabled');
+                        });
+
+                    }
+                });
+
+                $('#btnSubmit').click(function (e) {
+                    var URL = null;
+                    var formData = null;
+                    e.preventDefault();
+
+                    if (e.currentTarget.form.id == "SaveProcedure") {
+                        URL = "@Url.Action("SaveNodeName", "Procedure")";
+                        formData = $("#SaveProcedure").serialize();
+                    } else if (e.currentTarget.form.id == "SaveOperation") {
+                        URL = "@Url.Action("SaveNodeName", "Operation")";
+                        formData = $("#SaveOperation").serialize()
+                    } else if (e.currentTarget.form.id == "SaveRoot") {
+                        URL = "@Url.Action("SaveNodeName", "Home")";
+                        formData = $("#SaveRoot").serialize()
+                    } else if (e.currentTarget.form.id == "SaveProcess") {
+                        URL = "@Url.Action("SaveNodeName", "Process")";
+                        formData = $("#SaveProcess").serialize()
+                        if (!validateProcess()) {
+                            return;
+                        }
+                    }
+
+                    setInterval(callSave(formData, URL), 1000);
+
+                })
+
+
+                $("input[id*='UOM']").autocomplete({
+                    source: UOMLIST,
+                    maxShowItems: 10
+                });
+
+                $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                    var target = $(e.target).attr("href") // activated tab
+                    $("#hiddenTab").val(target);
+                });
+
+                if ($("#hiddenTab").val() != "") {
+                    $('.nav-pills a[href="' + $("#hiddenTab").val() + '"]').tab('show');
+                }
+                $('#preloader').fadeOut('slow');
+
+                //$('.InputList').width($('.tab-content').width()-40);
+                $(".InputList").mCustomScrollbar("update");
+                $(".InputList").mCustomScrollbar({ axis: "yx", theme: "3d-dark", scrollButtons: { enable: true }, advanced: { updateOnContentResize: true, updateOnBrowserResize: true, autoExpandHorizontalScroll: true } });
+
+                $('#textBx2').val($('#textBx2').val().replace(/<br\/>/gi, "\n"));
+
+            }
+
+            function deleteOperation(ctrl, type) {
+                var textBx = getFromBetween.get($("#textBx1").val(), "<<", ">>");
+
+                //if (arrayContains($("#" + ctrl).closest('tr').find('td').find('input').val(), textBx)) {
+                //    $.alert({
+                //        title: 'Error',
+                //        icon: 'fa fa-error',
+                //        type: 'red',
+                //        content: ' Please references of ' + $("#" + ctrl).closest('tr').find('td').find('input').val()
+                //    });
+                //} else {
+                    var url='@Url.Action("deleteOperation", "Process")';
+                    callAjax(url+"?nodeID=" + ctrl + "&type=" + type, "GET", null, deleteOperationSuccess, getFailure)
+                //}
+            }
+
+            function deleteOperationSuccess(data) {
+                if (data.Value == "SUCCESS") {
+                    //switch (data.Message.split('||')[0]) {
+                    //    case "Inputs": $("#tblInputs");
+                    //        $("#tblInputs tr td").filter(function () {
+                    //            return $(this).text() == data.Message.split('||')[1];
+                    //        }).parent('tr').addClass('hiddenClass');
+                    //        $("#" + data.Message.split('||')[1]).closest('tr').find('input').val('');
+                    //        break;
+                    //    case "Parameter":
+                    //        $("#tblParameter tr td").filter(function () {
+                    //            return $(this).text() == data.Message.split('||')[1];
+                    //        }).parent('tr').addClass('hiddenClass');
+                    //        $("#" + data.Message.split('||')[1]).closest('tr').find('input').val('');
+                    //        break;
+                    //    case "Equipment":
+                    //        $("#tblEquipment tr td").filter(function () {
+                    //            return $(this).text() == data.Message.split('||')[1];
+                    //        }).parent('tr').addClass('hiddenClass');
+                    //        $("#" + data.Message.split('||')[1]).closest('tr').find('input').val('');
+                    //        break;
+                    //    case "Output":
+                    //        $('#' + data.Message.split('||')[1]).closest('table').moveRow($('#' + data.Message.split('||')[1]).closest('tr')[0].rowIndex, $('#' + data.Message.split('||')[1]).closest('table').find('.hiddenClass').first()[0].rowIndex - 1);
+                    //        $("#tblOutput tr td").filter(function () {
+                    //            return $(this).text() == data.Message.split('||')[1];
+                    //        }).parent('tr').addClass('hiddenClass');
+                    //        $("#" + data.Message.split('||')[1]).closest('tr').find('input').val('');
+                    //        break;
+                    //}
+
+                    if (data.Message.split('||')[0] == "Inputs") {
+                        $('#' + data.Message.split('||')[1]).closest("table tr").find('td').find('select').prop('selectedIndex', 0);
+                    }
+                    $('#' + data.Message.split('||')[1]).closest('table').moveRow($('#' + data.Message.split('||')[1]).closest('tr')[0].rowIndex, $('#' + data.Message.split('||')[1]).closest('table').find('.hiddenClass').first()[0].rowIndex - 1);
+                    $("#" + $('#' + data.Message.split('||')[1]).closest('table')[0].id + " tr td").filter(function () {
+                        return ($(this).text().trim() == "" ? $.trim($(this).find('input').val()) : $.trim($(this).text())) == $.trim(data.Message.split('||')[1]);
+                    }).parent('tr').addClass('hiddenClass');
+                    $("#" + data.Message.split('||')[1]).closest('tr').find('input').val('');
+                    //delete from dropdown
+                    var delNodeID = data.Message.split('||')[1];
+                    $("#textBx1").val($("#textBx1").val().replace("<<" + delNodeID + ">>", " "));
+                    switch (data.Message.split('||')[0]) {
+                        case 'Inputs': $.each($("#inputUL").find('li'), function (index, value) {
+                            if ($(this).find('a').text() == delNodeID) {
+                                $(this).remove();
+
+                            }
+                                      })
+                                        break;
+                        case 'Parameter': $.each($("#parameterUL").find('li'), function (index, value) {
+                            if ($(this).find('a').text() == delNodeID) {
+                                $(this).remove();
+                            }
+                        })
+                            break;
+                        case 'Equipment': $.each($("#equipmentUL").find('li'), function (index, value) {
+                            if ($(this).find('a').text() == delNodeID) {
+                                $(this).remove();
+                            }
+                        })
+                            break;
+                        case 'Output':
+                            $.each($("#outputUL").find('li'), function (index, value) {
+                                if ($(this).find('a').text() == delNodeID) {
+                                    $(this).remove();
+                                }
+                            })
+                            break;
+
+                    }
+
+                }
+            }
+
+            function ExtractFromGetSuccess(result) {
+                var textBx = getFromBetween.get(result, "<<", ">>");
+                if (textBx.length > 0) {
+                    for (var i = 0; i < textBx.length; i++) {
+                        if (textBx[i].indexOf('I') == 0) {
+                            resFind = findDropdownValue(textBx[i], 'Input');
+
+                        } else if (textBx[i].indexOf('P') == 0) {
+                            resFind = findDropdownValue(textBx[i], 'Parameter');
+
+                        } else if (textBx[i].indexOf('E') == 0) {
+                            resFind = findDropdownValue(textBx[i], 'Equipment');
+
+                        } else if (textBx[i].indexOf('W') == 0 || textBx[i].indexOf('O') == 0) {
+                            resFind = findDropdownValue(textBx[i], 'Output');
+                        }
+
+                        result = result.replace('<<' + textBx[i] + '>>', resFind.value);
+                    }
+                }
+                $("#textBx2").val(JSON.parse(result));
+                $("#textBx1").focus();
+            }
+
+            function selectInput(drdpVal, type) {
+                var $txt = $("#textBx1");
+                var caretPos = $txt[0].selectionStart;
+                var textAreaTxt = $txt.val();
+                var txtToAdd = "<<" + drdpVal + ">>";
+                var resFind = null;
+                $("#textBx1").focus();
+                $txt.val(textAreaTxt.substring(0, caretPos) + txtToAdd + textAreaTxt.substring(caretPos));
+                //callAjax("../Process/ExtractFromGet", "POST", { text: JSON.stringify($txt.val()) }, ExtractFromGetSuccess, ExtractFromGetFailure);
+                var URL='@Url.Action("ExtractFromGet","Process")'
+                $.ajax({
+                    type: "POST",
+                    url: URL,
+                    cache:false,
+                    data: { text: JSON.stringify($txt.val()),seltype:JSON.stringify(type)},
+                    success: function (result) {
+                        var textBx = getFromBetween.get(result, "<<", ">>");
+                        if (textBx.length > 0) {
+                            for (var i = 0; i < textBx.length; i++) {
+                                if (textBx[i].indexOf('I') == 0) {
+                                    resFind = findDropdownValue(textBx[i], 'Input');
+
+                                } else if (textBx[i].indexOf('P') == 0) {
+                                    resFind = findDropdownValue(textBx[i], 'Parameter');
+
+                                } else if (textBx[i].indexOf('E') == 0) {
+                                    resFind = findDropdownValue(textBx[i], 'Equipment');
+
+                                } else if (textBx[i].indexOf('W') == 0 || textBx[i].indexOf('O') == 0) {
+                                    resFind = findDropdownValue(textBx[i], 'Output');
+                                }
+
+                                result = result.replace('<<' + textBx[i]+'>>', resFind.value);
+                            }
+                        }
+                        $("#textBx2").val(JSON.parse(result));
+                        $("#textBx1").focus();
+
+                    },
+                    failure: function (error, result) {
+                        var e = error;
+                    }
+                });
+            }
+
+            function findDropdownValue(valueToFind, type) {
+                var searchTable = [];
+                var send = {
+                    value: ""
+                };
+                if (type == "Input") {
+                    searchTable = $("#tblInputs").find('tr');
+                    for (var i = 0; i < searchTable.length; i++) {
+                        if ($(searchTable[i]).find('td').first().length > 0) {
+                            if ($(searchTable[i]).find('td').first().find('input').val().trim() != "") {
+                                if ($(searchTable[i]).find('td').first().find('input').val() == valueToFind) {
+                                    if (type == "Input") {
+                                        send.value = $($(searchTable[i]).find('td')[3]).find('input').first().val() + " " + $($(searchTable[i]).find('td')[3]).find('input').first().next().val() + " " + $($(searchTable[i]).find('td')[2]).find('input').val();
+                                    } else {
+                                        send.value = $($(searchTable[i]).find('td')[1]).find('input').val();
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                else if (type == "Parameter") {
+                    searchTable = $("#tblParameter").find('tr');
+                    for (var i = 0; i < searchTable.length; i++) {
+                        if ($(searchTable[i]).find('td').first().length > 0) {
+                            if ($(searchTable[i]).find('td').first().find('input').val().trim() != "") {
+                                if ($(searchTable[i]).find('td').first().find('input').val() == valueToFind) {
+                                    if (type == "Parameter") {
+                                        if ($(searchTable[i]).find('td').find('select').val()=="RANGE")
+                                            if ($(searchTable[i]).find('td').find('input').eq(4).val() != null && $(searchTable[i]).find('td').find('input').eq(4).val() != "")
+                                                send.value = $($(searchTable[i]).find('td')[1]).find('input').first().val() + " : " + $(searchTable[i]).find('td').find('input').eq(4).val()+" (" + $($(searchTable[i]).find('td')[3]).find('input').val() + " to " + $($(searchTable[i]).find('td')[4]).find('input').val() + ") " + $(searchTable[i]).find('td').find('input').eq(5).val();
+                                                    else
+                                                send.value = $($(searchTable[i]).find('td')[1]).find('input').first().val() + " : " + $($(searchTable[i]).find('td')[3]).find('input').val() + " to " + $($(searchTable[i]).find('td')[4]).find('input').val() + " " + $(searchTable[i]).find('td').find('input').eq(5).val();
+
+                                        else
+                                            send.value = $($(searchTable[i]).find('td')[1]).find('input').first().val() + " : " + $($(searchTable[i]).find('td')[5]).find('input').val() + " " + $(searchTable[i]).find('td').find('input').eq(5).val();
+                                    } else {
+                                        send.value = $($(searchTable[i]).find('td')[1]).find('input').val();
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                } else if (type == "Equipment") {
+                    searchTable = $("#tblEquipment").find('tr');
+                    for (var i = 0; i < searchTable.length; i++) {
+                        if ($(searchTable[i]).find('td').first().length > 0) {
+                            if ($(searchTable[i]).find('td').first().find('input').val().trim() != "") {
+                                if ($(searchTable[i]).find('td').first().find('input').val() == valueToFind) {
+                                    if (type == "Equipment") {
+                                        send.value = $($(searchTable[i]).find('td')[1]).find('input').val();
+                                    } else {
+                                        send.value = $($(searchTable[i]).find('td')[1]).find('input').val();
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                } else if (type == "Output") {
+                    searchTable = $("#tblOutput").find('tr');
+                    for (var i = 0; i < searchTable.length; i++) {
+                        if ($(searchTable[i]).find('td').first().length > 0) {
+                            if ($(searchTable[i]).find('td').first().find('input').val().trim() != "") {
+                                if ($(searchTable[i]).find('td').first().find('input').val() == valueToFind) {
+                                    if (type == "Output") {
+                                        send.value = $($(searchTable[i]).find('td')[1]).find('input').val() + "  "+$($($(searchTable[i]).find('td')[4]).find('input')[0]).val() + " " + $($($(searchTable[i]).find('td')[4]).find('input')[1]).val();
+                                    } else {
+                                        send.value = $($(searchTable[i]).find('td')[1]).find('input').val();
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+
+                return send;
+           }
+
+            var getFromBetween = {
+                results: [],
+                string: "",
+                getFromBetween: function (sub1, sub2) {
+                    if (this.string.indexOf(sub1) < 0 || this.string.indexOf(sub2) < 0) return false;
+                    var SP = this.string.indexOf(sub1) + sub1.length;
+                    var string1 = this.string.substr(0, SP);
+                    var string2 = this.string.substr(SP);
+                    var TP = string1.length + string2.indexOf(sub2);
+                    return this.string.substring(SP, TP);
+                },
+                removeFromBetween: function (sub1, sub2) {
+                    if (this.string.indexOf(sub1) < 0 || this.string.indexOf(sub2) < 0) return false;
+                    var removal = sub1 + this.getFromBetween(sub1, sub2) + sub2;
+                    this.string = this.string.replace(removal, "");
+                },
+                getAllResults: function (sub1, sub2) {
+                    // first check to see if we do have both substrings
+                    if (this.string.indexOf(sub1) < 0 || this.string.indexOf(sub2) < 0) return;
+
+                    // find one result
+                    var result = this.getFromBetween(sub1, sub2);
+                    // push it to the results array
+                    this.results.push(result);
+                    // remove the most recently found one from the string
+                    this.removeFromBetween(sub1, sub2);
+
+                    // if there's more substrings
+                    if (this.string.indexOf(sub1) > -1 && this.string.indexOf(sub2) > -1) {
+                        this.getAllResults(sub1, sub2);
+                    }
+                    else return;
+                },
+                get: function (string, sub1, sub2) {
+                    this.results = [];
+                    this.string = string;
+                    this.getAllResults(sub1, sub2);
+                    return this.results;
+                }
+            };
+
+            function DeleteNode() {
+                var PLM_STAGE_ID = $('#jstree').jstree().get_selected(true)[0].id;
+                 var url='@Url.Action("DeleteNode", "NodeOperation")';
+                     callAjax(url, 'GET', { 'PLM_STAGE_ID': JSON.stringify(PLM_STAGE_ID) }, function (data) {
+                         var url='@Url.Action("GetJSON", "Home")';
+                         callAjax(url, "GET", null, reloadTree, getJSONSuccess);
+                         alertify.set('notifier', 'position', 'top-right');
+                         alertify.notify('Deleted', 'success', 2);
+                }, getFailure);
+            }
+
+            function Move(Direction) {
+                var PLM_STAGE_ID = $('#jstree').jstree().get_selected(true)[0].id;
+                var lastIndex = parseInt($('#jstree').jstree().get_selected(true)[0].id.substring($('#jstree').jstree().get_selected(true)[0].id.lastIndexOf('.') + 1)) + 1;
+                var indexID = $('#jstree').jstree().get_selected(true)[0].id.substring(0, $('#jstree').jstree().get_selected(true)[0].id.lastIndexOf('.') + 1) + lastIndex;
+               // if ($('#jstree').jstree().get_selected(true)[0].original.node_name =="ManufacturingProcedure" && $("#jstree").jstree().get_node($('#jstree').jstree().get_selected(true)[0].id).children == $("#jstree").jstree().get_node(indexID).children) {
+                if ($('#jstree').jstree().get_selected(true)[0].original.node_name =="ManufacturingProcedure") {
+                      var url='@Url.Action("Move", "NodeOperation")';
+                    callAjax(url, 'GET', { 'PLM_STAGE_ID': JSON.stringify(PLM_STAGE_ID), 'Direction': JSON.stringify(Direction), 'type': JSON.stringify($('#jstree').jstree().get_selected(true)[0].original.node_name) }, function (data) {
+                        var url = '@Url.Action("GetJSON", "Home")';
+                        alertify.set('notifier', 'position', 'top-right');
+                        alertify.notify('Moved', 'success', 2);
+                        callAjax("GetJSON", "GET", null, reloadTree, getJSONSuccess);
+                    }, getFailure);
+                   // $.alert('Not Available!');
+                }
+                 else if ($('#jstree').jstree().get_selected(true)[0].original.node_name == "ManufacturingOperation") {
+                     var url='@Url.Action("Move", "NodeOperation")';
+                    callAjax(url, 'GET', { 'PLM_STAGE_ID': JSON.stringify(PLM_STAGE_ID), 'Direction': JSON.stringify(Direction), 'type': JSON.stringify($('#jstree').jstree().get_selected(true)[0].original.node_name) }, function (data) {
+                        var url = '@Url.Action("GetJSON", "Home")';
+                        alertify.set('notifier', 'position', 'top-right');
+                        alertify.notify('Moved', 'success', 2);
+                        callAjax("GetJSON", "GET", null, reloadTree, getJSONSuccess);
+                    }, getFailure);
+                }
+                else if ($('#jstree').jstree().get_selected(true)[0].original.node_name == "ManufacturingProcess") {
+                      var url='@Url.Action("Move", "NodeOperation")';
+                    callAjax(url, 'GET', { 'PLM_STAGE_ID': JSON.stringify(PLM_STAGE_ID), 'Direction': JSON.stringify(Direction), 'type': JSON.stringify($('#jstree').jstree().get_selected(true)[0].original.node_name) }, function (data) {
+                        var url = '@Url.Action("GetJSON", "Home")';
+                        alertify.set('notifier', 'position', 'top-right');
+                        alertify.notify('Moved', 'success', 2);
+                        callAjax("GetJSON", "GET", null, reloadTree, getJSONSuccess);
+                    }, getFailure);
+                }
+            else {
+                    $.alert({
+                        title: 'Error',
+                        icon: 'fa fa-error',
+                        type: 'red',
+                        content: 'Cannot move number of process should be same',
+                    });
+                }
+            }
+
+         function SavePDFFile() {
+           var url='@Url.Action("SavePDF", "PDFViewer")';
+            $.ajax({
+                url: url,
+                type: "GET",
+                cache: false,
+                beforeSend: function () {
+                    $('#preloader').fadeIn('slow');
+                },
+
+                success: function (result) {
+                    $('#preloader').fadeOut('slow');
+                    $('#btnUploadPDF').css('display', 'none');
+                    $.confirm({
+                        title: 'PDF Export!',
+                        content: result,
+                        buttons: {
+                            close: function () {
+                            },
+                        }
+                    });
+                },
+                complete: function () {
+                    $('#preloader').fadeOut('slow');
+                },
+                error: function (xhr) { // if error occured
+                    $('#preloader').fadeOut('slow');
+                    alertify.set('notifier', 'position', 'top-right');
+                    alertify.notify('Failure', 'Failure', 2);
+                }
+            });
+        }
+        </script>
+    }
+    <div id="preloader" style="display:none;">
+        <div style="position:relative">
+            <div style="left:50%;top:50%;position:fixed;">
+                <div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+            </div>
+        </div>
+    </div>
+</div>

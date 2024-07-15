@@ -1,0 +1,837 @@
+﻿@model Strides.Models.xProcess
+
+@using (Html.BeginForm(null, null, FormMethod.Post, new { id = "SaveProcess" }))
+{
+    <div class="form-horizontal">
+        @*<table style="width:100%;"><tr><td><h4>@Session["MFRTitle"]</h4> </td><td style="text-align:right;"><h5 style="color:grey">VER: @Session["MFRRevision"]</h5></td></tr></table>*@
+
+        <div class="form-group">
+            <div id="" class="exTab3">
+                <ul class="nav nav-pills" style="padding-top: 1%;">
+                    <li class="active" role="presentation">
+                        <a href="#info" aria-controls="info" role="tab" data-toggle="tab">INFO </a>
+                    </li>
+                    <li class="" role="presentation">
+                        <a href="#input" aria-controls="input" role="tab" data-toggle="tab">INPUT</a>
+                    </li>
+                    <li class="" role="presentation">
+                        <a href="#parameter" aria-controls="parameter" role="tab" data-toggle="tab">PARAMETER</a>
+                    </li>
+                    <li class="" role="presentation">
+                        <a href="#equipment" aria-controls="equipment" role="tab" data-toggle="tab">EQUIPMENT</a>
+                    </li>
+                    <li class="" role="presentation">
+                        <a href="#output" aria-controls="output" role="tab" data-toggle="tab">OUTPUT</a>
+                    </li>
+                </ul>
+                @{
+                    if (Convert.ToBoolean(Session["ViewMode"]))
+                    {
+
+                        <div class="tab-content clearfix">
+                            <div role="tabpanel" class="tab-pane active tabPadding" id="info">
+                                <div class="col-md-4 control-label" style="color:black">
+                                    <b> Process Name:</b>
+                                </div>
+                                <div class="col-md-8">
+                                    @Html.TextBoxFor(model => model.title, new { @readonly = "true", style = "width:300px;", @class = "form-control toUpper" })
+                                    @Html.HiddenFor(model => model.PLM_STAGE_ID)
+                                    @Html.HiddenFor(model => model.STAGE_ID)
+                                    @Html.HiddenFor(model => model.Icon)
+                                </div>
+
+                                <div class="col-md-4 control-label" style="color:black">
+                                    <b> Batch Size:</b>
+                                </div>
+                                <div class="col-md-8 control-label" style="text-align: left;">
+                                    @Session["BatchSize"]
+                                </div>
+                            </div>
+                            <div role="tabpanel" class="tab-pane" id="input">
+                                <div class="col-md-12">
+                                    <div style="margin-top: 1%;padding-bottom: 1%;    padding-left: 1%;">
+                                        <a class="btn btn-default btn-info" @(new { @readonly = "true" })>
+                                            <span class="fa fa-search"> Lookup</span>
+                                        </a>
+                                        <a class="btn btn-default btn-info" @(new { @readonly = "true" })>
+                                            <span class="fa fa-search"> Output Lookup</span>
+                                        </a>
+                                    </div>
+                                    <div class="InputList" style="max-height:400px;max-width:900px; overflow-y:auto;padding: 1%;">
+                                        <table class="table table-bordered" style="width:100%" id="tblInputs">
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Material Code</th>
+                                                <th>Material Name</th>
+                                                <th>Qty(Batch)</th>
+                                                <th>Qty(Unit)/<div>% Composition</div></th>
+                                                <th>Functional Category</th>
+                                                <th>IID Listed</th>
+                                                <th>Alternate Group</th>
+                                                <th>Priority</th>
+                                                <th>Priority Text</th>
+
+                                            </tr>
+
+                                            @{ for (int i = 0; i < Model.Inps.Count; i++)
+                                                {
+                                                    if (Model.Inps[i].Id == null && Model.Inps[i].ANumber == null && Model.Inps[i].Name == null)
+                                                    {
+                                                        <tr class="hiddenClass" id="@i">
+                                                            @{
+                                                                var QTY = Model.Inps[i].QtBatch;
+                                                                var QTB = Model.Inps[i].QTUnit;
+                                                                var Id = Model.Inps[i].Id;
+                                                                <td>@Html.TextBoxFor(model => model.Inps[i].Id, new { @readonly = "true", @class = "form-control", style = "width:70px" })</td>
+                                                                <td>@Html.TextBoxFor(model => model.Inps[i].ANumber, new { @readonly = "true", @class = "form-control", style = "width:100px" })</td>
+                                                                <td>@Html.TextBoxFor(model => model.Inps[i].Name, new { @readonly = "true", @class = "form-control", style = "width:330px" })</td>
+                                                                <td><div style="display: inline-flex;">@Html.TextBoxFor(model => model.Inps[i].QtBatch.Value, new { @type = "number", @readonly = "true", style = "width:75px", @class = "form-control" }) @Html.TextBoxFor(model => model.Inps[i].QtBatch.UOM, new { @readonly = "true", @class = "form-control", style = "width:60px" })</div></td>
+                                                                <td><div style="display: inline-flex;">@Html.TextBoxFor(model => model.Inps[i].QTUnit.Value, new { @readonly = "true", @type = "number", style = "width:75px", @class = "form-control" }) @Html.TextBoxFor(model => model.Inps[i].QTUnit.UOM, new { @readonly = "true", @class = "form-control", style = "width:60px" })</div></td>
+                                                                <td> @Html.DropDownListFor(model => model.Inps[i].FuncCategory, new SelectList(ViewBag.FuncCat, "VALUE", "Text", Model.Inps[i].FuncCategory), new { @disabled = "disabled", style = "width:200px" }) </td>
+                                                                <td>@Html.CheckBoxFor(model => model.Inps[i].IIGListed, new { @readonly = "true", @disabled = "disabled" })</td>
+                                                                <td>@Html.TextBoxFor(model => model.Inps[i].AlternateGroup, new { @maxlength = "3", @readonly = "true", style = "width:50px", @class = "form-control" })</td>
+                                                                <td>@Html.TextBoxFor(model => model.Inps[i].Priority, new { @maxlength = "3", @readonly = "true", style = "width:50px", @class = "form-control" })</td>
+                                                                <td>@Html.TextBoxFor(model => model.Inps[i].PriorityText, new { @maxlength = "3", @readonly = "true", style = "width:200px", @class = "form-control" })</td>
+                                                                @Html.HiddenFor(model => model.Inps[i].Source)
+                                                            }
+                                                        </tr>
+                                                    }
+                                                    else
+                                                    {
+
+                                                        <tr id="@i">
+                                                            @{
+                                                                var QTY = Model.Inps[i].QtBatch;
+                                                                var QTB = Model.Inps[i].QTUnit;
+                                                                var Id = Model.Inps[i].Id;
+                                                                <td>@Html.TextBoxFor(model => model.Inps[i].Id, new { @readonly = "true", @class = "form-control", style = "width:70px" })</td>
+                                                                <td>@Html.TextBoxFor(model => model.Inps[i].ANumber, new { @readonly = "true", @class = "form-control", style = "width:100px" })</td>
+                                                                <td>@Html.TextBoxFor(model => model.Inps[i].Name, new { @readonly = "true", @class = "form-control", style = "width:330px" })</td>
+                                                                <td><div style="display: inline-flex;">@Html.TextBoxFor(model => model.Inps[i].QtBatch.Value, new { @readonly = "true", style = "width:75px", @class = "form-control" }) @Html.TextBoxFor(model => model.Inps[i].QtBatch.UOM, new { @readonly = "true", @class = "form-control", style = "width:60px" })</div></td>
+                                                                <td><div style="display: inline-flex;">@Html.TextBoxFor(model => model.Inps[i].QTUnit.Value, new { @readonly = "true", @type = "number", style = "width:75px", @class = "form-control" }) @Html.TextBoxFor(model => model.Inps[i].QTUnit.UOM, new { @readonly = "true", @class = "form-control", style = "width:60px" })</div></td>
+                                                                <td><div style="width:200px"> @Html.DropDownListFor(model => model.Inps[i].FuncCategory, new SelectList(ViewBag.FuncCat, "VALUE", "Text", Model.Inps[i].FuncCategory), new { @disabled = "disabled", @class = "form-control valueType", style = "width:200px" }) </div></td>
+                                                                <td>@Html.CheckBoxFor(model => model.Inps[i].IIGListed, new { @readonly = "true",@disabled="disabled" })</td>
+                                                                <td><div style="width:50px">@Html.TextBoxFor(model => model.Inps[i].AlternateGroup, new { @maxlength = "3", @readonly = "true", style = "width:50px;", @class = "form-control" })</div></td>
+                                                                <td><div style="width:50px">@Html.TextBoxFor(model => model.Inps[i].Priority, new { @maxlength = "3", @readonly = "true", style = "width:50px;", @class = "form-control" })</div></td>
+                                                                <td><div style="width:200px">@Html.TextBoxFor(model => model.Inps[i].PriorityText, new { @maxlength = "3", @readonly = "true", style = "width:50px;", @class = "form-control" })</div></td>
+                                                                @Html.HiddenFor(model => model.Inps[i].Source)
+                                                            }
+                                                        </tr>
+                                                    }
+                                                }
+                                            }
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div role="tabpanel" class="tab-pane" id="parameter">
+                                <div class="col-md-12">
+                                    <div style="padding-bottom: 1%;margin-top: 1%;    padding-left: 1%;">
+                                        <a class="btn btn-default btn-success" @(new { @readonly = "true" })>
+                                            <span class="fa fa-plus"> Add</span>
+                                        </a>
+                                        <a class="btn btn-default btn-info" @(new { @readonly = "true" })>
+                                            <span class="fa fa-search"> Lookup</span>
+                                        </a>
+                                    </div>
+                                    <div class="ParameterList" style="max-height:400px;padding: 1%;">
+                                        <table class="table table-bordered" style="" id="tblParameter">
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Name</th>
+                                                <th style="width:99px">Value Type</th>
+                                                <th>Min</th>
+                                                <th>Max</th>
+                                                <th>Target</th>
+                                                <th>UOM</th>
+                                                <th>In Process Control</th>
+                                            </tr>
+                                            @{ for (int i = 0; i < Model.Params.Count; i++)
+                                                {
+                                                    if (Model.Params[i].Id == null && Model.Params[i].Description == null && Model.Params[i].Max == null && Model.Params[i].Min == null && Model.Params[i].Name == null && Model.Params[i].Target == null && Model.Params[i].UOM == null && Model.Params[i].Value == null && Model.Params[i].VType == null)
+                                                    {
+                                                        <tr class="hiddenClass" id="@i">
+                                                            <td style="width:70px">@Html.TextBoxFor(model => model.Params[i].Id, new { @readonly = "true", @class = "form-control", style = "width:70px" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Params[i].Name, new { @class = "form-control parameterList", @readonly = "true" })</td>
+                                                            <td style="width:99px">
+                                                                @Html.DropDownListFor(model => model.Params[i].VType, new SelectList(ViewBag.valueTypes, "Value", "Text", Model.Params[i].VType), new { @disabled = "disabled", @class = "form-control valueType", style = "width:99px" })
+                                                            </td>
+                                                            <td>@Html.TextBoxFor(model => model.Params[i].Min, new { @readonly = "true", @type = "number", @class = "form-control " + (Model.Params[i].VType == "RANGE" ? "" : "txtDisabled") + "", style = "width:70px" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Params[i].Max, new { @readonly = "true", @type = "number", @class = "form-control " + (Model.Params[i].VType == "RANGE" ? "" : "txtDisabled") + "", style = "width:70px" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Params[i].Target, new { @readonly = "true", @class = "form-control toUpper" + (Model.Params[i].VType == "VALUE" ? "" : "") + "", style = "" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Params[i].UOM, new { @readonly = "true", style = "width:60px;", @placeholder = "UOM", @class = "form-control" })</td>
+                                                            <td style="width:70px"> @Html.CheckBoxFor(model => model.Params[i].InProcessControl, new { disabled = "disabled", @class = "form-control", style = "height: 17px;width: 17px; " })</td>
+                                                        </tr>
+                                                    }
+                                                    else
+                                                    {
+                                                        <tr id="@i">
+                                                            <td style="width:70px">@Html.TextBoxFor(model => model.Params[i].Id, new { @readonly = "true", @class = "form-control", @style = "width:70px" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Params[i].Name, new { @class = "form-control parameterList", @readonly = "true" })</td>
+                                                            <td style="width:99px">
+                                                                @Html.DropDownListFor(model => model.Params[i].VType, new SelectList(ViewBag.valueTypes, "VALUE", "Text", Model.Params[i].VType), new { @disabled = "disabled", @class = "form-control valueType", style = "width:99px" })
+                                                            </td>
+                                                            <td>@Html.TextBoxFor(model => model.Params[i].Min, new { @readonly = "true", @type = "number", @class = "form-control " + (Model.Params[i].VType == "RANGE" ? "" : "txtDisabled") + "", style = "width:70px" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Params[i].Max, new { @readonly = "true", @type = "number", @class = "form-control " + (Model.Params[i].VType == "RANGE" ? "" : "txtDisabled") + "", style = "width:70px" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Params[i].Target, new { @readonly = "true", @class = "form-control toUpper" + (Model.Params[i].VType == "VALUE" ? "" : "txtDisabled") + "", style = "" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Params[i].UOM, new { @readonly = "true", style = "width:50px;", @placeholder = "UOM", @class = "form-control" })</td>
+                                                            <td style="width:70px"> @Html.CheckBoxFor(model => model.Params[i].InProcessControl, new { disabled = "disabled", @class = "form-control", style = "height: 17px;width: 17px; " })</td>
+                                                        </tr>
+                                                        //counter++;
+                                                    }
+                                                }
+                                            }
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane" role="tabpanel" id="equipment">
+                                <div class="col-md-12">
+                                    <div style="padding-bottom: 1%;margin-top: 1%;    padding-left: 1%;">
+                                        <a class="btn btn-default btn-info" @(new { @readonly = "true" })>
+                                            <span class="fa fa-search"> Lookup</span>
+                                        </a>
+                                    </div>
+                                    <div class="EquipmentList" style="max-height:400px;padding: 1%;">
+
+                                        <table class="table table-bordered" style="" id="tblEquipment">
+                                            <tr>
+                                                <th>ID</th>
+                                                <th style="display:none">Equipment Number</th>
+                                                <th>Equipment Name</th>
+                                            </tr>
+
+                                            @{ for (int i = 0; i < Model.Eqps.Count; i++)
+                                                {
+                                                    if (Model.Eqps[i].Id == null && Model.Eqps[i].Name == null && Model.Eqps[i].EQNumber == null)
+                                                    {
+                                                        <tr class="hiddenClass" id="@i">
+
+                                                            <td style="width:70px">@Html.TextBoxFor(model => model.Eqps[i].Id, new { @readonly = "true", @class = "form-control", @style = "width:70px" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Eqps[i].Name, new { @readonly = "true", @class = "form-control" })</td>
+                                                            <td style="display:none">@Html.TextBoxFor(model => model.Eqps[i].EQNumber, new { @readonly = "true", @class = "form-control" })</td>
+                                                        </tr>
+                                                    }
+                                                    else
+                                                    {
+                                                        <tr id="@i">
+
+                                                            @*<td style = "width:70px">@Html.DisplayFor(model => model.Eqps[i].Id) @Html.HiddenFor(model => model.Eqps[i].Id)</td>
+                                                                <td>@Html.DisplayFor(model => model.Eqps[i].Name) @Html.HiddenFor(model => model.Eqps[i].Name)</td>
+                                                                <td style="display:none">@Html.DisplayFor(model => model.Eqps[i].EQNumber) @Html.HiddenFor(model => model.Eqps[i].EQNumber)</td>*@
+                                                            <td style="width:70px">@Html.TextBoxFor(model => model.Eqps[i].Id, new { @readonly = "true", @class = "form-control", @style = "width:70px" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Eqps[i].Name, new { @readonly = "true", @class = "form-control" })</td>
+                                                            <td style="display:none">@Html.TextBoxFor(model => model.Eqps[i].EQNumber, new { @readonly = "true", @class = "form-control" })</td>
+                                                        </tr>
+                                                    }
+                                                }
+                                            }
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane" role="tabpanel" id="output">
+                                <div class="col-md-12">
+                                    <div style="padding-bottom: 1%;margin-top: 1%;    padding-left: 1%;">
+                                        <a class="btn btn-default btn-success" @(new { @readonly = "true" })>
+                                            <span class="fa fa-plus"> Add</span>
+                                        </a>
+                                        <a class="btn btn-default btn-info" @(new { @readonly = "true" })>
+                                            <span class="fa fa-search"> Lookup</span>
+                                        </a>
+                                    </div>
+                                    <div class="OutputList" style="max-height:400px;padding: 1%;">
+
+                                        <table class="table table-bordered" style="" id="tblOutput">
+                                            <tr>
+                                                <th>ID</th>
+                                                @*<th>ANumber</th>*@
+                                                <th>Name</th>
+                                                <th style="width:150px">Qty(Batch)</th>
+                                                @*<th>Functional Category</th>*@
+                                            </tr>
+
+                                            @{ for (int i = 0; i < Model.Outs.Count; i++)
+                                                {
+                                                    if (Model.Outs[i].ANumber == null && Model.Outs[i].Description == null && Model.Outs[i].Id == null && Model.Outs[i].FuncCategory == null && Model.Outs[i].Name == null && Model.Outs[i].QtBatch == null && Model.Outs[i].Type == null)
+                                                    {
+                                                        <tr class="hiddenClass" id="@i">
+                                                            <td style="width:70px">@Html.TextBoxFor(model => model.Outs[i].Id, new { @readonly = "true", @class = "form-control", style = "width:70px" })</td>
+                                                            <td style="display:none;">@Html.HiddenFor(model => model.Outs[i].ANumber, new { @readonly = "true", @class = "form-control", style = "width:250px" })</td>
+                                                            <td style="display:none;">@Html.HiddenFor(model => model.Outs[i].Type, new { @readonly = "true", @class = "form-control", style = "width:250px" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Outs[i].Name, new { @readonly = "true", @class = "form-control" })</td>
+                                                            <td style="width:150px"><div style="display:inline-flex">@Html.TextBoxFor(model => model.Outs[i].QtBatch.Value, new { @readonly = "true", @class = "form-control", style = "width:80px;" }) @Html.TextBoxFor(model => model.Outs[i].QtBatch.UOM, new { @readonly = "true", style = "width:60px;", @placeholder = "UOM", @class = "form-control" })</div></td>
+                                                            @*<td>@Html.TextBoxFor(model => model.Outs[i].FuncCategory, new { @class = "form-control" })</td>*@
+                                                            @* <td> @Html.DropDownListFor(model => model.Outs[i].FuncCategory, new SelectList(ViewBag.FuncCat, "Value", "Text", Model.Outs[i].FuncCategory), new { @class = "form-control valueType", style = "width:160px" }) </td>*@
+
+                                                        </tr>
+                                                    }
+                                                    else
+                                                    {
+                                                        <tr id="@i">
+                                                            @{
+                                                                if (Model.Outs[i].Id.Substring(0, 1).ToLower() == "w")
+                                                                {
+                                                                    <td style="width:70px">@Html.TextBoxFor(model => model.Outs[i].Id, new { @readonly = "true", @class = "form-control", style = "width:70px" })</td>
+                                                                    <td style="display:none">@Html.HiddenFor(model => model.Outs[i].ANumber, new { @readonly = "true", @class = "form-control", style = "width:250px" })</td>
+                                                                    <td style="display:none">@Html.HiddenFor(model => model.Outs[i].Type, new { @readonly = "true", @class = "form-control", style = "width:250px" })</td>
+                                                                    <td>@Html.TextBoxFor(model => model.Outs[i].Name, new { @readonly = "true", @class = "form-control" })</td>
+                                                                    <td style="width:150px;"><div style="display:inline-flex;width:150px;">@Html.TextBoxFor(model => model.Outs[i].QtBatch.Value, new { @readonly = "true", @class = "form-control", style = "width:80px;" }) @Html.TextBoxFor(model => model.Outs[i].QtBatch.UOM, new { @readonly = "true", style = "width:60px;", @placeholder = "UOM", @class = "form-control" })</div></td>
+                                                                    @*<td>@Html.TextBoxFor(model => model.Outs[i].FuncCategory, new { @class = "form-control" })</td>*@
+                                                                    @* <td> @Html.DropDownListFor(model => model.Outs[i].FuncCategory, new SelectList(ViewBag.FuncCat, "Value", "Text", Model.Outs[i].FuncCategory), new { @class = "form-control valueType", style = "width:160px" }) </td>*@
+                                                                }
+                                                                else
+                                                                {
+                                                                    <td style="width:70px">@Html.TextBoxFor(model => model.Outs[i].Id, new { @readonly = "true", @class = "form-control", style = "width:70px" })</td>
+                                                                    <td style="display:none">@Html.HiddenFor(model => model.Outs[i].ANumber, new { @readonly = "true", @class = "form-control", style = "width:250px" })</td>
+                                                                    <td style="display:none">@Html.HiddenFor(model => model.Outs[i].Type, new { @readonly = "true", @class = "form-control", style = "width:250px" })</td>
+                                                                    <td>@Html.TextBoxFor(model => model.Outs[i].Name, new { @readonly = "true", @class = "form-control" })</td>
+                                                                    <td style="width:150px;"><div style="display:inline-flex;width:150px">@Html.TextBoxFor(model => model.Outs[i].QtBatch.Value, new { @readonly = "true", @class = "form-control", style = "width:80px;" }) @Html.TextBoxFor(model => model.Outs[i].QtBatch.UOM, new { @readonly = "true", style = "width:60px;", @placeholder = "UOM", @class = "form-control" })</div></td>
+                                                                    @*<td>@Html.TextBoxFor(model => model.Outs[i].FuncCategory, new { @class = "form-control" })</td>*@
+                                                                    @* <td> @Html.DropDownListFor(model => model.Outs[i].FuncCategory, new SelectList(ViewBag.FuncCat, "Value", "Text", Model.Outs[i].FuncCategory), new { @class = "form-control valueType", style = "width:160px" }) </td>*@
+
+                                                                }
+
+                                                            }
+                                                        </tr>
+                                                    }
+                                                }
+                                            }
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="tab-content clearfix">
+                            <div role="tabpanel" class="tab-pane active tabPadding" id="info">
+                                <div class="col-md-4 control-label" style="color:black">
+                                    <b> Process Name:</b>
+                                </div>
+                                <div class="col-md-8">
+                                    @Html.TextBoxFor(model => model.title, new { @class = "form-control toUpper", style = "width:300px;" })
+                                    @Html.HiddenFor(model => model.PLM_STAGE_ID)
+                                    @Html.HiddenFor(model => model.STAGE_ID)
+                                    @Html.HiddenFor(model => model.Icon)
+                                </div>
+
+                                <div class="col-md-4 control-label" style="color:black">
+                                    <b> Batch Size:</b>
+                                </div>
+                                <div class="col-md-8 control-label" style="text-align: left;">
+                                    @Session["BatchSize"]
+                                </div>
+                            </div>
+                            <div role="tabpanel" class="tab-pane" id="input">
+                                <div class="">
+                                    <div style="margin-top: 1%;padding-bottom: 1%;    padding-left: 1%;">
+                                        <a class="btn btn-default btn-info" @(new { @href = "Javascript:callAgileInput('Input');" })>
+                                            <span class="fa fa-search"> Lookup</span>
+                                        </a>
+                                        <a class="btn btn-default btn-info" @(new { @href = "Javascript:loadOutput();" })>
+                                            <span class="fa fa-search"> Output Lookup</span>
+                                        </a>
+                                    </div>
+                                    <div class="InputList" style="max-height:400px;max-width:900px;overflow :auto;padding: 1%;">
+                                        <table class="table table-bordered" style="width:100%" id="tblInputs">
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Material Code</th>
+                                                <th>Material Name</th>
+                                                <th>Qty(Batch)</th>
+                                                <th>Qty(Unit)/<div>% Composition</div></th>
+                                                <th>Functional Category</th>
+                                                <th>IID Listed</th>
+                                                <th>Alternate Group</th>
+                                                <th>Priority</th>
+                                                <th>Priority Text</th>
+                                                <th style="padding-right:40px"></th>
+                                            </tr>
+
+                                            @{ for (int i = 0; i < Model.Inps.Count; i++)
+                                                {
+                                                    if (Model.Inps[i].Id == null && Model.Inps[i].ANumber == null && Model.Inps[i].Name == null)
+                                                    {
+                                                        <tr class="hiddenClass" id="@i">
+                                                            @{
+                                                                var QTY = Model.Inps[i].QtBatch;
+                                                                var QTB = Model.Inps[i].QTUnit;
+                                                                var Id = Model.Inps[i].Id;
+                                                                <td>@Html.TextBoxFor(model => model.Inps[i].Id, new { @class = "form-control", style = "width:70px", @readonly = "true" })</td>
+                                                                <td>@Html.TextBoxFor(model => model.Inps[i].ANumber, new { @class = "form-control", style = "width:100px", @readonly = "true" })</td>
+                                                                <td>@Html.TextBoxFor(model => model.Inps[i].Name, new { @class = "form-control", style = "width:330px", @readonly = "true" })</td>
+                                                                <td><div style="display: inline-flex;">@Html.TextBoxFor(model => model.Inps[i].QtBatch.Value, new { @type = "number", @class = "form-control", style = "width:75px" }) @Html.TextBoxFor(model => model.Inps[i].QtBatch.UOM, new { @readonly = "true", @class = "form-control", style = "width:60px", @placeholder = "UOM" })</div></td>
+                                                                <td><div style="display: inline-flex;">@Html.TextBoxFor(model => model.Inps[i].QTUnit.Value, new { @type = "number", @class = "form-control", style = "width:75px" }) @Html.TextBoxFor(model => model.Inps[i].QTUnit.UOM, new { @class = "form-control", style = "width:60px", @placeholder = "UOM" })</div></td>
+                                                                <td> @Html.DropDownListFor(model => model.Inps[i].FuncCategory, new SelectList(ViewBag.FuncCat, "VALUE", "Text", Model.Inps[i].FuncCategory), new { @class = "form-control valueType", style = "width:200px" }) </td>
+                                                                <td>@Html.CheckBoxFor(model => model.Inps[i].IIGListed, new { @class = "" })</td>
+                                                                <td>@Html.TextBoxFor(model => model.Inps[i].AlternateGroup, new { @maxlength = "3", @class = "form-control", style = "width:50px" })</td>
+                                                                <td>@Html.TextBoxFor(model => model.Inps[i].Priority, new { @maxlength = "3", @class = "form-control", style = "width:50px" })</td>
+                                                                <td>@Html.TextBoxFor(model => model.Inps[i].PriorityText, new { @maxlength = "3", @class = "form-control" })</td>
+                                                                <td style="padding-right:40px"><a href="JavaScript:DeleteInputs('trNewInputs@{@i}');" id='trNewInputs@{@i}' class=""><i class="fa fa-trash" style="color: red;font-size:18px"></i></a></td>
+                                                                @Html.HiddenFor(model => model.Inps[i].Source)
+                                                            }
+                                                        </tr>
+                                                    }
+                                                    else
+                                                    {
+
+                                                        <tr id="@i">
+                                                            @{
+                                                                var QTY = Model.Inps[i].QtBatch;
+                                                                var QTB = Model.Inps[i].QTUnit;
+                                                                var Id = Model.Inps[i].Id;
+                                                                <td>@Html.TextBoxFor(model => model.Inps[i].Id, new { @class = "form-control", style = "width:70px", @readonly = "true" })</td>
+                                                                <td>@Html.TextBoxFor(model => model.Inps[i].ANumber, new { @class = "form-control", style = "width:100px", @readonly = "true" })</td>
+                                                                <td>@Html.TextBoxFor(model => model.Inps[i].Name, new { @class = "form-control", style = "width:330px", @readonly = "true" })</td>
+                                                                <td><div style="display: inline-flex;">@Html.TextBoxFor(model => model.Inps[i].QtBatch.Value, new { @type = "number", @class = "form-control", style = "width:75px" }) @Html.TextBoxFor(model => model.Inps[i].QtBatch.UOM, new { @readonly = "true", @class = "form-control", style = "width:60px", @placeholder = "UOM" })</div></td>
+                                                                <td><div style="display: inline-flex;">@Html.TextBoxFor(model => model.Inps[i].QTUnit.Value, new { @type = "number", @class = "form-control", style = "width:75px" }) @Html.TextBoxFor(model => model.Inps[i].QTUnit.UOM, new { @class = "form-control", style = "width:60px", @placeholder = "UOM" })</div></td>
+                                                                <td><div style="width:200px"> @Html.DropDownListFor(model => model.Inps[i].FuncCategory, new SelectList(ViewBag.FuncCat, "VALUE", "Text", Model.Inps[i].FuncCategory), new { @class = "form-control valueType", style = "width:200px" }) </div></td>
+                                                                <td>@Html.CheckBoxFor(model => model.Inps[i].IIGListed)</td>
+                                                                <td><div style="width:50px">@Html.TextBoxFor(model => model.Inps[i].AlternateGroup, new { @maxlength = "3", @class = "form-control", style = "width:50px;" })</div></td>
+                                                                <td><div style="width:50px">@Html.TextBoxFor(model => model.Inps[i].Priority, new { @maxlength = "3", @class = "form-control", style = "width:50px;" })</div></td>
+                                                                <td><div style="width:200px">@Html.TextBoxFor(model => model.Inps[i].PriorityText, new { @maxlength = "3", @class = "form-control" })</div></td>
+                                                                <td style="padding-right:40px"><a href="JavaScript:deleteOperation('@Html.DisplayFor(model => model.Inps[i].Id)','Inputs');" id=@Html.DisplayFor(model => model.Inps[i].Id) class=""><i class="fa fa-trash" style="color: red;font-size:18px"></i></a></td>
+                                                                @Html.HiddenFor(model => model.Inps[i].Source)
+                                                            }
+                                                        </tr>
+                                                    }
+                                                }
+                                            }
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div role="tabpanel" class="tab-pane" id="parameter">
+                                <div class="">
+                                    <div style="padding-bottom: 1%;margin-top: 1%;    padding-left: 1%;">
+                                        <a class="btn btn-default btn-success" @(new { @href = "Javascript:modParameter();" })>
+                                            <span class="fa fa-plus"> Add</span>
+                                        </a>
+                                        <a class="btn btn-default btn-info" @(new { @href = "Javascript:callAgileInput('Parameter');" })>
+                                            <span class="fa fa-search"> Lookup</span>
+                                        </a>
+                                    </div>
+                                    <div class="ParameterList" style="max-height:400px;padding: 1%;">
+                                        <table class="table table-bordered" style="" id="tblParameter">
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Name</th>
+                                                <th style="width:99px">Value Type</th>
+                                                <th>Min</th>
+                                                <th>Max</th>
+                                                <th>Target</th>
+                                                <th>UOM</th>
+                                                <th>In Process Control</th>
+                                                <th></th>
+                                            </tr>
+                                            @{ for (int i = 0; i < Model.Params.Count; i++)
+                                                {
+                                                    if (Model.Params[i].Id == null && Model.Params[i].Description == null && Model.Params[i].Max == null && Model.Params[i].Min == null && Model.Params[i].Name == null && Model.Params[i].Target == null && Model.Params[i].UOM == null && Model.Params[i].Value == null && Model.Params[i].VType == null)
+                                                    {
+                                                        <tr class="hiddenClass" id="@i">
+                                                            <td style="width:70px">@Html.TextBoxFor(model => model.Params[i].Id, new { @readonly = "true", @class = "form-control", style = "width:70px" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Params[i].Name, new { @class = "form-control parameterList", @readonly = "true" })</td>
+                                                            <td style="width:99px">
+                                                                @Html.DropDownListFor(model => model.Params[i].VType, new SelectList(ViewBag.valueTypes, "VALUE", "Text", Model.Params[i].VType), new { @class = "form-control valueType", style = "width:99px" })
+                                                            </td>
+                                                            <td>@Html.TextBoxFor(model => model.Params[i].Min, new { @type = "number", @class = "form-control " + (Model.Params[i].VType == "RANGE" ? "" : "txtDisabled") + "", style = "width:70px" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Params[i].Max, new { @type = "number", @class = "form-control " + (Model.Params[i].VType == "RANGE" ? "" : "txtDisabled") + "", style = "width:70px" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Params[i].Target, new { @class = "form-control toUpper" + (Model.Params[i].VType == "VALUE" ? "" : "") + "", style = "" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Params[i].UOM, new { @class = "form-control", style = "width:60px;", @placeholder = "UOM" })</td>
+                                                            <td style="width:70px"> @Html.CheckBoxFor(model => model.Params[i].InProcessControl, new { @class = "form-control", style = "height: 17px;width: 17px; " })</td>
+                                                            <td><a href="JavaScript:DeleteParameter('trNewParameter@{@i}');" id='trNewParameter@{@i}' class=""><i class="fa fa-trash" style="color: red;font-size:18px"></i></a></td>
+                                                        </tr>
+                                                    }
+                                                    else
+                                                    {
+                                                        <tr id="@i">
+                                                            <td style="width:70px">@Html.TextBoxFor(model => model.Params[i].Id, new { @class = "form-control", @readonly = "true", @style = "width:70px" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Params[i].Name, new { @class = "form-control parameterList", @readonly = "true" })</td>
+                                                            <td style="width:99px">
+                                                                @Html.DropDownListFor(model => model.Params[i].VType, new SelectList(ViewBag.valueTypes, "VALUE", "Text", Model.Params[i].VType), new { @class = "form-control valueType", style = "width:99px" })
+                                                            </td>
+                                                            <td>@Html.TextBoxFor(model => model.Params[i].Min, new { @type = "number", @class = "form-control " + (Model.Params[i].VType == "RANGE" ? "" : "txtDisabled") + "", style = "width:70px" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Params[i].Max, new { @type = "number", @class = "form-control " + (Model.Params[i].VType == "RANGE" ? "" : "txtDisabled") + "", style = "width:70px" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Params[i].Target, new { @class = "form-control toUpper" + (Model.Params[i].VType == "VALUE" ? "" : "txtDisabled") + "", style = "" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Params[i].UOM, new { @class = "form-control", style = "width:60px;", @placeholder = "UOM" })</td>
+                                                            <td style="width:70px"> @Html.CheckBoxFor(model => model.Params[i].InProcessControl, new { @class = "form-control", style = "height: 17px;width: 17px; " })</td>
+                                                            <td><a href="JavaScript:deleteOperation('@Html.DisplayFor(model => model.Params[i].Id)','Parameter');" id=@Html.DisplayFor(model => model.Params[i].Id) class=""><i class="fa fa-trash" style="color: red;font-size:18px"></i></a></td>
+                                                        </tr>
+                                                        //counter++;
+                                                    }
+                                                }
+                                            }
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane" role="tabpanel" id="equipment">
+                                <div class="">
+                                    <div style="padding-bottom: 1%;margin-top: 1%;    padding-left: 1%;">
+                                        <a class="btn btn-default btn-info" @(new { @href = "Javascript:callAgileInput('Equipment');" })>
+                                            <span class="fa fa-search"> Lookup</span>
+                                        </a>
+                                    </div>
+                                    <div class="EquipmentList" style="max-height:400px;padding: 1%;">
+
+                                        <table class="table table-bordered" style="" id="tblEquipment">
+                                            <tr>
+                                                <th>ID</th>
+                                                <th style="display:none">Equipment Number</th>
+                                                <th>Equipment Name</th>
+                                                <th></th>
+                                            </tr>
+
+                                            @{ for (int i = 0; i < Model.Eqps.Count; i++)
+                                                {
+                                                    if (Model.Eqps[i].Id == null && Model.Eqps[i].Name == null && Model.Eqps[i].EQNumber == null)
+                                                    {
+                                                        <tr class="hiddenClass" id="@i">
+
+                                                            <td style="width:70px">@Html.TextBoxFor(model => model.Eqps[i].Id, new { @class = "form-control", style = "width:70px", @readonly = "true" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Eqps[i].Name, new { @class = "form-control" })</td>
+                                                            <td style="display:none">@Html.TextBoxFor(model => model.Eqps[i].EQNumber, new { @class = "form-control", @readonly = "true" })</td>
+                                                            <td style="width:50px;"><a href="JavaScript:DeleteEquipment('trNewEquipment@{@i}');" id='trNewEquipment@{@i}' class=""><i class="fa fa-trash" style="color: red;font-size:18px"></i></a></td>
+                                                        </tr>
+                                                    }
+                                                    else
+                                                    {
+                                                        <tr id="@i">
+
+                                                            @*<td style = "width:70px">@Html.DisplayFor(model => model.Eqps[i].Id) @Html.HiddenFor(model => model.Eqps[i].Id)</td>
+                                                                <td>@Html.DisplayFor(model => model.Eqps[i].Name) @Html.HiddenFor(model => model.Eqps[i].Name)</td>
+                                                                <td style="display:none">@Html.DisplayFor(model => model.Eqps[i].EQNumber) @Html.HiddenFor(model => model.Eqps[i].EQNumber)</td>*@
+                                                            <td style="width:70px">@Html.TextBoxFor(model => model.Eqps[i].Id, new { @class = "form-control", style = "width:70px", @readonly = "true" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Eqps[i].Name, new { @class = "form-control" })</td>
+                                                            <td style="display:none">@Html.TextBoxFor(model => model.Eqps[i].EQNumber, new { @class = "form-control", @readonly = "true" })</td>
+                                                            <td style="width:50px;"><a href="JavaScript:deleteOperation('@Html.DisplayFor(model => model.Eqps[i].Id)','Equipment');" id=@Html.DisplayFor(model => model.Eqps[i].Id) class=""><i class="fa fa-trash" style="color: red;font-size:18px"></i></a></td>
+                                                        </tr>
+                                                    }
+                                                }
+                                            }
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane" role="tabpanel" id="output">
+                                <div class="">
+                                    <div style="padding-bottom: 1%;margin-top: 1%;    padding-left: 1%;">
+                                        <a class="btn btn-default btn-success" @(new { @href = "Javascript:modOutput();" })>
+                                            <span class="fa fa-plus"> Add</span>
+                                        </a>
+                                        <a class="btn btn-default btn-info" @( new { @href = "Javascript:callAgileInput('Output');" })>
+                                            <span class="fa fa-search"> Lookup</span>
+                                        </a>
+                                    </div>
+                                    <div class="OutputList" style="max-height:400px;padding: 1%;">
+
+                                        <table class="table table-bordered" style="" id="tblOutput">
+                                            <tr>
+                                                <th>ID</th>
+                                                @*<th>ANumber</th>*@
+                                                <th>Name</th>
+                                                <th style="width:150px">Qty(Batch)</th>
+                                                @*<th>Functional Category</th>*@
+                                                <th></th>
+                                            </tr>
+
+                                            @{ for (int i = 0; i < Model.Outs.Count; i++)
+                                                {
+                                                    if (Model.Outs[i].ANumber == null && Model.Outs[i].Description == null && Model.Outs[i].Id == null && Model.Outs[i].FuncCategory == null && Model.Outs[i].Name == null && Model.Outs[i].QtBatch == null && Model.Outs[i].Type == null)
+                                                    {
+                                                        <tr class="hiddenClass" id="@i">
+                                                            <td style="width:70px">@Html.TextBoxFor(model => model.Outs[i].Id, new { @class = "form-control", style = "width:70px", @readonly = "true" })</td>
+                                                            <td style="display:none;">@Html.HiddenFor(model => model.Outs[i].ANumber, new { @class = "form-control", style = "width:250px" })</td>
+                                                            <td style="display:none;">@Html.HiddenFor(model => model.Outs[i].Type, new { @class = "form-control", style = "width:250px" })</td>
+                                                            <td>@Html.TextBoxFor(model => model.Outs[i].Name, new { @class = "form-control" })</td>
+                                                            <td style="width:150px"><div style="display:inline-flex">@Html.TextBoxFor(model => model.Outs[i].QtBatch.Value, new { @type = "number", @class = "form-control", style = "width:80px;" }) @Html.TextBoxFor(model => model.Outs[i].QtBatch.UOM, new { @class = "form-control", style = "width:60px;", @placeholder = "UOM" })</div></td>
+                                                            @*<td>@Html.TextBoxFor(model => model.Outs[i].FuncCategory, new { @class = "form-control" })</td>*@
+                                                            @* <td> @Html.DropDownListFor(model => model.Outs[i].FuncCategory, new SelectList(ViewBag.FuncCat, "Value", "Text", Model.Outs[i].FuncCategory), new { @class = "form-control valueType", style = "width:160px" }) </td>*@
+
+                                                            <td><a href="JavaScript:DeleteOutput('trNewOutput@{@i}');" id='trNewOutput@{@i}' class=""><i class="fa fa-trash" style="color: red;font-size:18px"></i></a></td>
+                                                        </tr>
+                                                    }
+                                                    else
+                                                    {
+                                                        <tr id="@i">
+                                                            @{
+                                                                if (Model.Outs[i].Id.Substring(0, 1).ToLower() == "w")
+                                                                {
+                                                                    <td style="width:70px">@Html.TextBoxFor(model => model.Outs[i].Id, new { @class = "form-control", style = "width:70px", @readonly = "true" })</td>
+                                                                    <td style="display:none">@Html.HiddenFor(model => model.Outs[i].ANumber, new { @class = "form-control", style = "width:250px" })</td>
+                                                                    <td style="display:none">@Html.HiddenFor(model => model.Outs[i].Type, new { @class = "form-control", style = "width:250px" })</td>
+                                                                    <td>@Html.TextBoxFor(model => model.Outs[i].Name, new { @class = "form-control" })</td>
+                                                                    <td style="width:150px;"><div style="display:inline-flex;width:150px;">@Html.TextBoxFor(model => model.Outs[i].QtBatch.Value, new { @type = "number", @class = "form-control", style = "width:80px;" }) @Html.TextBoxFor(model => model.Outs[i].QtBatch.UOM, new { @class = "form-control", style = "width:60px;", @placeholder = "UOM" })</div></td>
+                                                                    @*<td>@Html.TextBoxFor(model => model.Outs[i].FuncCategory, new { @class = "form-control" })</td>*@
+                                                                    @* <td> @Html.DropDownListFor(model => model.Outs[i].FuncCategory, new SelectList(ViewBag.FuncCat, "Value", "Text", Model.Outs[i].FuncCategory), new { @class = "form-control valueType", style = "width:160px" }) </td>*@
+                                                                    <td style="width:50px"><a href="JavaScript:deleteOperation('@Html.DisplayFor(model => model.Outs[i].Id)','Output');" id=@Html.DisplayFor(model => model.Outs[i].Id) class=""><i class="fa fa-trash" style="color: red;font-size:18px"></i></a></td>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <td style="width:70px">@Html.TextBoxFor(model => model.Outs[i].Id, new { @class = "form-control", style = "width:70px", @readonly = "true" })</td>
+                                                                    <td style="display:none">@Html.HiddenFor(model => model.Outs[i].ANumber, new { @class = "form-control", style = "width:250px" })</td>
+                                                                    <td style="display:none">@Html.HiddenFor(model => model.Outs[i].Type, new { @class = "form-control", style = "width:250px" })</td>
+                                                                    <td>@Html.TextBoxFor(model => model.Outs[i].Name, new { @readonly = "true", @class = "form-control" })</td>
+                                                                    <td style="width:150px;"><div style="display:inline-flex;width:150px">@Html.TextBoxFor(model => model.Outs[i].QtBatch.Value, new { @type = "number", @class = "form-control", style = "width:80px;" }) @Html.TextBoxFor(model => model.Outs[i].QtBatch.UOM, new { @readonly = "true", @class = "form-control", style = "width:60px;", @placeholder = "UOM" })</div></td>
+                                                                    @*<td>@Html.TextBoxFor(model => model.Outs[i].FuncCategory, new { @class = "form-control" })</td>*@
+                                                                    @* <td> @Html.DropDownListFor(model => model.Outs[i].FuncCategory, new SelectList(ViewBag.FuncCat, "Value", "Text", Model.Outs[i].FuncCategory), new { @class = "form-control valueType", style = "width:160px" }) </td>*@
+                                                                    <td style="width:50px"><a href="JavaScript:deleteOperation('@Html.DisplayFor(model => model.Outs[i].Id)','Output');" id=@Html.DisplayFor(model => model.Outs[i].Id) class=""><i class="fa fa-trash" style="color: red;font-size:18px"></i></a></td>
+
+                                                                }
+
+                                                            }
+                                                        </tr>
+                                                    }
+                                                }
+                                            }
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+            <br />
+            <div class="exTab3 col-md-12"><b>PROCESS DETAILS :</b></div>
+            <br />
+            <div class="exTab3 col-md-12">
+                <table>
+                    <tr>
+                        <td>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default">INPUT</button>
+                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <span class="caret"></span>
+                                    <span class="sr-only">Toggle Dropdown</span>
+                                </button>
+                                <ul class="dropdown-menu scrollable-menu" id="inputUL">
+                                    @for (int i = 0; i < Model.Inps.Count; i++)
+                                    {
+                                        if (Model.Inps[i].Id != null && Model.Inps[i].Name != null && Model.Inps[i].ANumber != null)
+                                        {
+                                            <li>
+                                                @if (!Convert.ToBoolean(Session["ViewMode"]))
+                                                {
+                                                    <a class="dropdown-item" href="Javascript:selectInput('@Model.Inps[i].Id','Inputs');">@Model.Inps[i].Id</a>
+                                                }
+                                                else
+                                                {
+                                                    <a class="dropdown-item" href="#">@Model.Inps[i].Id</a>
+                                                }
+                                            </li>
+                                        }
+                                    }
+                                </ul>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default">PARAMETER</button>
+                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <span class="caret"></span>
+                                    <span class="sr-only">Toggle Dropdown</span>
+                                </button>
+                                <ul class="dropdown-menu scrollable-menu" id="parameterUL">
+                                    @for (int i = 0; i < Model.Params.Count; i++)
+                                    {
+                                        if (Model.Params[i].Id != null && Model.Params[i].Name != null && Model.Params[i].VType != null)
+                                        {
+                                            <li>
+                                                @if (!Convert.ToBoolean(Session["ViewMode"]))
+                                                {
+                                                    <a class="dropdown-item" href="Javascript:selectInput('@Model.Params[i].Id','Parameter')">@Model.Params[i].Id</a>
+                                                }
+                                                else
+                                                {
+                                                    <a class="dropdown-item" href="#">@Model.Params[i].Id</a>
+                                                }
+                                            </li>
+                                        }
+                                    }
+                                </ul>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default">EQUIPMENT</button>
+                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <span class="caret"></span>
+                                    <span class="sr-only">Toggle Dropdown</span>
+                                </button>
+                                <ul class="dropdown-menu scrollable-menu" id="equipmentUL">
+                                    @for (int i = 0; i < Model.Eqps.Count; i++)
+                                    {
+                                        if (Model.Eqps[i].Id != null && Model.Eqps[i].Name != null && Model.Eqps[i].EQNumber != null)
+                                        {
+                                            <li>
+                                                @if (!Convert.ToBoolean(Session["ViewMode"]))
+                                                {
+                                                    <a class="dropdown-item" href="Javascript:selectInput('@Model.Eqps[i].Id','Equipment')">@Model.Eqps[i].Id</a>
+                                                }
+                                                else
+                                                {
+                                                    <a class="dropdown-item" href="#">@Model.Eqps[i].Id</a>
+                                                }
+                                            </li>
+                                        }
+                                    }
+                                </ul>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default">OUTPUT</button>
+                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <span class="caret"></span>
+                                    <span class="sr-only">Toggle Dropdown</span>
+                                </button>
+                                <ul class="dropdown-menu scrollable-menu" id="outputUL">
+                                    @for (int i = 0; i < Model.Outs1.Count; i++)
+                                    {
+                                        if (Model.Outs1[i].Id != null && Model.Outs1[i].Name != null)
+                                        {
+                                            <li>
+                                                @if (!Convert.ToBoolean(Session["ViewMode"]))
+                                                {
+                                                    if (Model.Outs1[i].STAGE_ID != Model.STAGE_ID)
+                                                    {
+                                                        <a class="dropdown-item" href="Javascript:selectInput('@Model.Outs1[i].Id','Output')">@Model.Outs1[i].Id</a>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <a class="dropdown-item" href="#">@Model.Outs1[i].Id</a>
+                                                }
+                                            </li>
+                                        }
+                                    }
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <br />
+            <div class="exTab3 col-md-12">
+                <table style="width:100%;margin-top: 0.5%;">
+                    <tr>
+                        <td> @Html.TextAreaFor(m => m.textBx1, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", cols = "40", rows = "5", style = "resize:vertical; min-height:205px;" } : new { cols = "40", rows = "10", style = "resize:vertical;min-height:205px;" })</td>
+                        <td> @Html.TextAreaFor(m => m.textBx2, new { cols = "40", rows = "5", @readonly = "true", style = "resize:vertical;background-color: #fff;min-height:205px;background-color: #f3f3f3;" })</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+
+
+        <style>
+            .scrollable-menu {
+                height: auto;
+                max-height: 200px;
+                overflow-x: hidden;
+            }
+        </style>
+    </div>
+
+    <div class="modal fade bs-example-modal-md" tabindex="-1" role="dialog" aria-labelledby="modalParameter" id="modalParameter">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title"></h4>
+                </div>
+                <div class="modal-body">
+
+                    <table class="table table-borderless" style="">
+                        <tr><td style="text-align:right">Id :</td><td>@Html.TextBox("txtId", null, new { @class = "form-control", @id = "txtId" })</td></tr>
+                        <tr> <td style="text-align:right">Name :</td> <td>@Html.TextBox("txtName", null, new { @class = "form-control", @id = "txtName" })</td></tr>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="AddParameter();">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade bs-example-modal-md" tabindex="-1" role="dialog" aria-labelledby="modalOutput" id="modalOutput">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title"></h4>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-borderless" style="">
+                        <tr><td style="text-align:right">Id :</td><td>@Html.TextBox("txtOutId", null, new { @class = "form-control", @id = "txtOutId" })</td></tr>
+                        @*<tr> <td style="text-align:right">ANumber :</td> <td>@Html.TextBox("txtMaterialNumber", null, new { @class = "form-control", @id = "txtMaterialNumber" })</td></tr>*@
+                        <tr><td style="text-align:right">Name :</td> <td>@Html.TextBox("txtMaterialName", null, new { @class = "form-control", @id = "txtMaterialName" })</td></tr>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="AddOutput();">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="modalOutput" id="modalOutputList">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title"></h4>
+                </div>
+                <div class="modal-body">
+
+                    <div class="mCustomScrollbar" id="tblOutputList" style="height:300px;overflow:auto">
+
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="SelectFromOutputList();">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    if (!Convert.ToBoolean(Session["ViewMode"]))
+    {
+        <input type="button" class="btn btn-primary" value="Save" style="float:right" id="btnSubmit" />
+    }
+
+
+    <div class="modal fade bs-example-modal-md" tabindex="-1" role="dialog" aria-labelledby="modalLookups" id="modalLookups" backdrop="false">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title"></h4>
+                </div>
+                <div class="modal-body">
+                    <table style="width:100%">
+                        <tr>
+                            <td style="width: 67%;padding-left: 27%;padding-bottom: 1%;">
+                                <div id="divSearchBtn" style="display: inline-flex;width:100%;">
+
+                                </div>
+                            </td>
+                            <td></td>
+                        </tr>
+                    </table>
+                    <div id="divLookups" class="divLookups" style="height:400px;overflow-y:auto;">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}

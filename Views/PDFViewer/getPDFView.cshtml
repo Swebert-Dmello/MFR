@@ -1,0 +1,9 @@
+﻿<div style="left:45%;text-align:center;position:fixed;bottom:20px">
+    @{ if (!Convert.ToBoolean(Session["ViewMode"]))
+        {
+            <a href="JavaScript:SaveFile();" class="btn btn-success">Save</a>
+        }
+    }
+    <a href="JavaScript:DeleteFile();" class="btn btn-danger">Cancel</a>
+</div>
+

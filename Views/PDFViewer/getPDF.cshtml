@@ -1,0 +1,103 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+@model Strides.Models.PDFViewer
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>getPDF</title>
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    <style>
+        .ajs-message, .ajs-custom {
+            color: #fff;
+            background-color: rgb(172, 41, 37);
+            border-color: rgb(118, 28, 25);
+        }
+    </style>
+    <script>
+    function DeleteFile() {
+        var url='@Url.Action("DeleteFile", "PDFViewer")';
+        callAjax(url, "GET", null, function (result) {
+            setTimeout(closeWindows, 1000);
+
+        }, function (result) {
+            alertify.set('notifier', 'position', 'top-right');
+            alertify.notify('Failure', 'Failure', 2);
+        }
+        );
+
+        }
+
+        function SavePDFFile() {
+           var url='@Url.Action("SavePDF", "PDFViewer")';
+
+            $.ajax({
+                url: url,
+                type: "GET",
+                cache: false,
+                beforeSend: function () {
+                    $('#preloader').fadeIn('slow');
+                },
+
+                success: function (result) {
+                    $('#preloader').fadeOut('slow');
+                    // $.alert(data);
+                    $.confirm({
+                        title: 'PDF Export!',
+                        content: result,
+                        buttons: {
+                            close: function () {
+                                window.open('', '_self', '');
+                                window.close();
+                            },
+                        }
+                    });
+                },
+                complete: function () {
+                    $('#preloader').fadeOut('slow');
+                },
+                error: function (xhr) { // if error occured
+                    $('#preloader').fadeOut('slow');
+                    alertify.set('notifier', 'position', 'top-right');
+                    alertify.notify('Failure', 'Failure', 2);
+                }
+            });
+        }
+
+        function closeWindows() {
+            window.open('', '_self', '');
+            window.close();
+        }
+
+        (function () {
+            $('#preloader').fadeIn('slow');
+        })();
+
+
+         $(document).ready(function () {
+               $('#preloader').fadeOut('slow');
+            });
+    </script>
+</head>
+<body style="height:100%">
+    <div class="container" style="height:100%;width:100%;">
+        <div class="embed-responsive embed-responsive-4by3">
+            <iframe src="@Url.Action("getPDF","PDFViewer")" type="application/pdf" />
+        </div>
+    </div>
+    <div id="preloader" style="display:none;">
+        <div style="position:relative">
+            <div style="left:50%;top:50%;position:fixed;">
+                <div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,349 @@
+﻿@model Strides.Models.ProductInfo
+
+@using (Html.BeginForm(null, null, FormMethod.Post, new { id = "SaveRoot" }))
+{
+
+
+    <div class="form-horizontal" style="padding-top: 1%;">
+        @*<table style="width:100%;"><tr><td><h4>@Session["MFRTitle"]</h4> </td><td style="text-align:right;"><h5 style="color:grey">VER: @Session["MFRRevision"]</h5></td></tr></table>*@
+
+        <div class="form-group">
+            <div id="" class="exTab3 col-md-12">
+                <ul class="nav nav-pills">
+                    <li class="active">
+                        <a href="#">INFO </a>
+                    </li>
+                </ul>
+                <div class="tab-content clearfix">
+                    <div class="tab-pane
+                         active tabPadding" id="1b">
+                        <div class="col-md-1"></div>
+                        <div class="col-md-10">
+                            @if (Model != null)
+                            {
+                                <div class="form-group">
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <td style="width:29%;text-align:right;">   Name :</td>
+                                            <td>
+                                                @Html.TextBoxFor(model => Model.MFRName, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control" } : new { @class = "form-control" })
+                                                @Html.HiddenFor(model => model.prodName.Name)
+                                                @Html.HiddenFor(model => model.prodName.Description)
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="text-align:right;">  Manufacturing Plant :</td>
+                                            <td style="display:inline-flex">
+                                                @Html.DisplayFor(model => Model.plantName.value)
+                                                @Html.HiddenFor(model => model.plantName.value)
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="text-align:right;">  Batch Size :</td>
+                                            <td style="display:inline-flex">
+                                                @Html.TextBoxFor(model => Model.batchSize.value, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control" } : new { @class = "form-control" })
+                                                @Html.TextBoxFor(model => Model.batchSize.UOM, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control", style = "width:60px", @placeholder = "UOM" } : new { @placeholder = "UOM", @readonly = "true", @class = "form-control", style = "width:60px" })
+
+                                                @*@Html.HiddenFor(model => model.batchSize.Name)*@
+                                                @Html.HiddenFor(model => model.batchSize.Description)
+                                            </td>
+                                        </tr>
+                                        @*<tr>
+                                                <td style="text-align:right;">  Description :</td>
+                                                <td>
+                                                    @Html.TextAreaFor(model => Model.prodDesc.value, new { @class = "form-control", cols = "50", rows = "5", style = "resize:vertical;" })
+                                                    @Html.HiddenFor(model => model.prodDesc.Name)
+                                                    @Html.HiddenFor(model => model.prodDesc.Description)
+                                                </td>
+                                            </tr>*@
+                                        @*<tr>
+                                                <td style="text-align:right;">  Label Claim  :</td>
+                                                <td>
+                                                    @Html.TextAreaFor(model => Model.labelClaim.value, new { @class = "form-control", cols = "50", rows = "5", style = "resize:vertical;" })
+                                                    @Html.HiddenFor(model => model.labelClaim.Name)
+                                                    @Html.HiddenFor(model => model.labelClaim.Description)
+                                                </td>
+                                            </tr>*@
+                                        @*<tr>
+                                                <td style="text-align:right;">  Shelf Life  :</td>
+                                                <td>
+                                                    @Html.TextBoxFor(model => Model.shelfLife.value, new { @class = "form-control" })
+                                                    @Html.HiddenFor(model => model.shelfLife.Name)
+                                                    @Html.HiddenFor(model => model.shelfLife.Description)
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="text-align:right;">  Storage Condition :</td>
+                                                <td>
+                                                    @Html.TextAreaFor(model => Model.stageCond.value, new { @class = "form-control", cols = "50", rows = "5", style = "resize:vertical;" })
+                                                    @Html.HiddenFor(model => model.stageCond.Name)
+                                                    @Html.HiddenFor(model => model.stageCond.Description)
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="text-align:right;">  PrimaryPackaging   :</td>
+                                                <td>
+                                                    @Html.TextBoxFor(model => Model.priPackage.value, new { @class = "form-control" })
+                                                    @Html.HiddenFor(model => model.priPackage.Name)
+                                                    @Html.HiddenFor(model => model.priPackage.Description)
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="text-align:right;">  Pharmacopoeial Reference   :</td>
+                                                <td>
+                                                    @Html.TextBoxFor(model => Model.phramaCo.value, new { @class = "form-control" })
+                                                    @Html.HiddenFor(model => model.phramaCo.Name)
+                                                    @Html.HiddenFor(model => model.phramaCo.Description)
+                                                </td>
+                                            </tr>*@
+                                        <tr>
+                                            <td style="text-align:right;">  Calculation :</td>
+                                            <td>
+                                                @Html.TextAreaFor(model => Model.calc.value, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control textAreaScroll" } : new { @class = "form-control", cols = "50", rows = "5", style = "resize:vertical;" })
+                                                @Html.HiddenFor(model => model.calc.Name)
+                                                @Html.HiddenFor(model => model.calc.Description)
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="text-align:right;">  Special Instruction :</td>
+                                            <td>
+                                                <table style="width:100%" class="table table-hover table-bordered;">
+                                                    <tr>
+                                                        <td>
+                                                            <table style="width:100%" id="tblSpecialInstruction">
+                                                                @{
+                                                                    if (Model.splIinst != null)
+                                                                    {
+                                                                        for (int i = 0; i < Model.splIinst.SIlist.Count; i++)
+                                                                        {
+                                                                            if ((Model.splIinst.SIlist[i].Text == String.Empty || Model.splIinst.SIlist[i].Text == null))
+                                                                            {
+                                                                                <tr class="hiddenClass">
+                                                                                    <td>
+                                                                                        @Html.TextAreaFor(model => Model.splIinst.SIlist[i].Text, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control", cols = "50", rows = "2" } : new { @class = "form-control", cols = "50", rows = "2", style = "resize:vertical;" })
+                                                                                    </td>
+                                                                                    <td><a href="Javascript:DeleteSpecialInstruction('sIPoint_@i');" id='sIPoint_@i'><i class="fa fa-trash" style="color:red"></i></a></td>
+                                                                                </tr>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <tr>
+                                                                                    <td>
+                                                                                        @Html.TextAreaFor(model => Model.splIinst.SIlist[i].Text, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control", cols = "50", rows = "2" } : new { @class = "form-control", cols = "50", rows = "3", style = "resize:vertical;" })
+                                                                                        @{
+                                                                                            if (!Convert.ToBoolean(Session["ViewMode"]))
+                                                                                            {
+                                                                                            <td class="text-center"> <a href="Javascript:DeleteSpecialPointsNew('sIPoint_@Model.splIinst.SIlist[i].Id')" id='sIPoint_@Model.splIinst.SIlist[i].Id'><i class="fa fa-trash" style="color:red;"></i></a></td>
+                                                                                        }
+                                                                                        }
+                                                                                    </tr>
+                                                                                }
+                                                                            }
+                                                                        }
+
+                                                                        if (!Convert.ToBoolean(Session["ViewMode"]))
+                                                                        {
+                                                                            <tr>
+                                                                                <td colspan="5" class="text-right">
+
+                                                                                    <a href="Javascript:InsertSpecialPoints();" class="text-right" style="padding-right: 1.5%;">
+                                                                                        <i class="fa fa-plus-square" style="color: green;font-size: 25px;"></i>
+                                                                                    </a>
+                                                                                </td>
+                                                                            </tr>
+                                                                        }
+                                                                }
+
+                                                            </table>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                        @*<tr>
+                                                <td style="text-align:right;"> Specification :</td>
+                                                <td>
+                                                    @Html.TextAreaFor(model => Model.prodSpecific.value, new { @class = "form-control", cols = "50", rows = "5", style = "resize:vertical;" })
+                                                    @Html.HiddenFor(model => model.prodSpecific.Name)
+                                                    @Html.HiddenFor(model => model.prodSpecific.Description)
+                                                </td>
+                                            </tr>*@
+                                        <tr>
+                                            <td style="text-align:right;">
+                                                Precautions :
+                                            </td>
+                                            <td>
+                                                @Html.TextAreaFor(model => Model.preCaution.value, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control", cols = "50", rows = "5" } : new { @class = "form-control", cols = "50", rows = "5", style = "resize:vertical;" })
+                                                @Html.HiddenFor(model => model.preCaution.Name)
+                                                @Html.HiddenFor(model => model.preCaution.Description)
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td style="text-align:right;">Product Specific Instructions :</td>
+                                            <td>
+                                                @Html.TextAreaFor(model => Model.prodSpecific.value, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control", cols = "50", rows = "5" } : new { @class = "form-control", cols = "50", rows = "5", style = "resize:vertical;" })
+                                                @Html.HiddenFor(model => model.prodSpecific.Name)
+                                                @Html.HiddenFor(model => model.prodSpecific.Description)
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td style="text-align:right;">Accessories :</td>
+                                            <td>
+                                                @Html.TextAreaFor(model => Model.accessories.value, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control", cols = "50", rows = "5" } : new { @class = "form-control", cols = "50", rows = "5", style = "resize:vertical;" })
+                                                @Html.HiddenFor(model => model.accessories.Name)
+                                                @Html.HiddenFor(model => model.accessories.Description)
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="text-align:right;"> Utilities :</td>
+                                            <td>
+                                                @Html.TextAreaFor(model => Model.utility.value, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control", cols = "50", rows = "5" } : new { @class = "form-control", cols = "50", rows = "5", style = "resize:vertical;" })
+                                                @Html.HiddenFor(model => model.utility.Name)
+                                                @Html.HiddenFor(model => model.utility.Description)
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td style="text-align:right;"> Critical Control Points :</td>
+                                            <td>
+                                                <table>
+                                                    <tr>
+                                                        <td>@Html.CheckBoxFor(model => Model.cCtrlPoints.IsApplicable, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true" } : new { style = "" }) Is Applicable</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <table class="table table-hover table-bordered" id="tblControlPoint" @(Model.cCtrlPoints != null && Model.cCtrlPoints.IsApplicable ? "style=display:table;" : "style=display:none;")>
+                                                                <tr>
+                                                                    <th>Critical Process Steps</th>
+                                                                    <th>Parameter To Be Studied</th>
+                                                                    <th>Justification</th>
+                                                                    <th>Risk Factor</th>
+
+                                                                    @{
+                                                                        if (!Convert.ToBoolean(Session["ViewMode"]))
+                                                                        {
+                                                                            <th>Delete</th>
+                                                                        }
+                                                                    }
+                                                                </tr>
+                                                                @{
+                                                                    if (Model.cCtrlPoints != null)
+                                                                    {
+                                                                        for (int i = 0; i < Model.cCtrlPoints.cPlist.Count; i++)
+                                                                        {
+                                                                            if ((Model.cCtrlPoints.cPlist[i].step == String.Empty || Model.cCtrlPoints.cPlist[i].step == null) && (Model.cCtrlPoints.cPlist[i].justification == String.Empty || Model.cCtrlPoints.cPlist[i].justification == null) && (Model.cCtrlPoints.cPlist[i].parameter == String.Empty || Model.cCtrlPoints.cPlist[i].parameter == null) && (Model.cCtrlPoints.cPlist[i].riskFactor == String.Empty || Model.cCtrlPoints.cPlist[i].riskFactor == null))
+                                                                            {
+                                                                                <tr class="hiddenClass">
+                                                                                    <td>@Html.TextBoxFor(model => Model.cCtrlPoints.cPlist[i].step, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control", cols = "50", rows = "5" } : new { @class = "form-control", cols = "50", rows = "5", style = "resize:vertical;" })</td>
+                                                                                    <td>
+                                                                                        @Html.TextBoxFor(model => Model.cCtrlPoints.cPlist[i].parameter, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control", cols = "50", rows = "5" } : new { @class = "form-control", cols = "50", rows = "5", style = "resize:vertical;" })
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        @Html.TextBoxFor(model => Model.cCtrlPoints.cPlist[i].justification, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control", cols = "50", rows = "5" } : new { @class = "form-control", cols = "50", rows = "5", style = "resize:vertical;" })
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        @Html.TextBoxFor(model => Model.cCtrlPoints.cPlist[i].riskFactor, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control", cols = "50", rows = "5" } : new { @class = "form-control", cols = "50", rows = "5", style = "resize:vertical;" })
+                                                                                    </td>
+                                                                                    @{
+                                                                                        if (!Convert.ToBoolean(Session["ViewMode"]))
+                                                                                        {
+                                                                                            <td><a href="Javascript:DeleteControlPoints('cPoint_@i');" id='cPoint_@i'><i class="fa fa-trash" style="color:red"></i></a></td>
+                                                                                        }
+                                                                                    }
+                                                                                </tr>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <tr>
+                                                                                    <td>
+                                                                                        @Html.TextBoxFor(model => Model.cCtrlPoints.cPlist[i].step, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control", cols = "50", rows = "5" } : new { @class = "form-control", cols = "50", rows = "5", style = "resize:vertical;" })
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        @Html.TextBoxFor(model => Model.cCtrlPoints.cPlist[i].parameter, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control", cols = "50", rows = "5" } : new { @class = "form-control", cols = "50", rows = "5", style = "resize:vertical;" })
+                                                                                    <td>
+                                                                                        @Html.TextBoxFor(model => Model.cCtrlPoints.cPlist[i].justification, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control", cols = "50", rows = "5" } : new { @class = "form-control", cols = "50", rows = "5", style = "resize:vertical;" })
+                                                                                    </td>
+                                                                                    <td>  @Html.TextBoxFor(model => Model.cCtrlPoints.cPlist[i].riskFactor, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control", cols = "50", rows = "5" } : new { @class = "form-control", cols = "50", rows = "5", style = "resize:vertical;" }) </td>
+                                                                                    @{
+                                                                                        if (!Convert.ToBoolean(Session["ViewMode"]))
+                                                                                        {
+                                                                                            <td class="text-center"> <a href="Javascript:DeleteControlPointsNew('sPoint_@Model.cCtrlPoints.cPlist[i].Id')" id='sPoint_@Model.cCtrlPoints.cPlist[i].Id'><i class="fa fa-trash" style="color:red;"></i></a></td>
+                                                                                        }
+                                                                                    }
+                                                                                </tr>
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                    if (!Convert.ToBoolean(Session["ViewMode"]))
+                                                                    {
+                                                                        <tr>
+                                                                            <td colspan="5" class="text-right">
+
+                                                                                <a href="Javascript:InsertControlPoints();" class="text-right" style="padding-right: 1.5%;">
+                                                                                    <i class="fa fa-plus-square" style="color: green;font-size: 25px;"></i>
+                                                                                </a>
+                                                                            </td>
+                                                                        </tr>
+
+                                                                    }
+                                                                }
+                                                            </table>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td style="text-align:right;">  Primary Packaging   :</td>
+                                            <td>
+                                                @Html.TextAreaFor(model => Model.priPackage.value, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control", cols = "50", rows = "5" } : new { @class = "form-control", cols = "50", rows = "5", style = "resize:vertical;" })
+                                                @Html.HiddenFor(model => model.priPackage.Name)
+                                                @Html.HiddenFor(model => model.priPackage.Description)
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td style="text-align:right;"> Remarks/Note :</td>
+                                            <td>
+                                                @Html.TextAreaFor(model => Model.remarks.value, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control", cols = "50", rows = "5" } : new { @class = "form-control", cols = "50", rows = "5", style = "resize:vertical;" })
+                                                @Html.HiddenFor(model => model.remarks.Name)
+                                                @Html.HiddenFor(model => model.remarks.Description)
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td style="text-align:right;"> Hold Time Recommendation :</td>
+                                            <td>
+                                                @Html.TextAreaFor(model => Model.hTRecomnd.value, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control", cols = "50", rows = "5" } : new { @class = "form-control", cols = "50", rows = "5", style = "resize:vertical;" })
+                                                @Html.HiddenFor(model => model.hTRecomnd.Name)
+                                                @Html.HiddenFor(model => model.hTRecomnd.Description)
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td style="text-align:right;"> Proposed Yield :</td>
+                                            <td>
+                                                @Html.TextAreaFor(model => Model.propYield.value, Convert.ToBoolean(Session["ViewMode"]) ? (object)new { @readonly = "true", @class = "form-control", cols = "50", rows = "5" } : new { @class = "form-control", cols = "50", rows = "5", style = "resize:vertical;" })
+                                                @Html.HiddenFor(model => model.propYield.Name)
+                                                @Html.HiddenFor(model => model.propYield.Description)
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            }
+                        </div>
+                        <div class="col-md-1"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    if (!Convert.ToBoolean(Session["ViewMode"]))
+    {
+        <input type="button" class="btn btn-success" value="Save" style="float:right" id="btnSubmit" />
+    }
+}

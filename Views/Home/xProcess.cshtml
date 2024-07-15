@@ -1,0 +1,126 @@
+﻿@model Strides.Models.xProcess
+
+@using (Html.BeginForm("xProcess", "Process", FormMethod.Post))
+{
+    <div class="form-horizontal">
+      
+        <h4>@Model.title</h4>
+        <hr />
+        <div class="form-group">
+            <div id="" class="exTab3 col-md-12">
+                <ul class="nav nav-pills">
+                    <li class="active" role="presentation">
+                        <a href="#info" aria-controls="info" role="tab" data-toggle="tab">INFO </a>
+                    </li>
+                    <li class="" role="presentation">
+                        <a href="#input" aria-controls="input" role="tab" data-toggle="tab">INPUT</a>
+                    </li>
+                    <li class="" role="presentation">
+                        <a href="#parameter" aria-controls="parameter" role="tab" data-toggle="tab">PARAMETER</a>
+                    </li>
+                    <li class="" role="presentation">
+                        <a href="#equipment" aria-controls="equipment" role="tab" data-toggle="tab">EQUIPMENT</a>
+                    </li>
+                    <li class="" role="presentation">
+                        <a href="#output" aria-controls="output" role="tab" data-toggle="tab">OUTPUT</a>
+                    </li>
+                </ul>
+                <div class="tab-content clearfix">
+                    <div role="tabpanel" class="tab-pane active" id="info">
+                        <div class="col-md-5 control-label" style="color:black">
+                            <b> @Model.title:</b>
+                        </div>
+                        <div class="col-md-7">
+                            @Html.EditorFor(model => model.title, new { htmlAttributes = new { @class = "form-control" } })
+                        </div>
+                    </div>
+                    <div  role="tabpanel" class="tab-pane" id="input">
+                        <div class="col-md-5 control-label" style="color:black">
+                            <b> @Model.title:</b>
+                        </div>
+                        <div class="col-md-7">
+                            @Html.EditorFor(model => model.title, new { htmlAttributes = new { @class = "form-control" } })
+                        </div>
+                    </div>
+                    <div  role="tabpanel" class="tab-pane" id="parameter">
+                        <div class="col-md-5 control-label" style="color:black">
+                            <b> @Model.title:</b>
+                        </div>
+                        <div class="col-md-7">
+                            @Html.EditorFor(model => model.OP.Name, new { htmlAttributes = new { @class = "form-control" } })
+                        </div>
+                    </div>
+                    <div class="tab-pane"  role="tabpanel" id="equipment">
+                        <div class="col-md-5 control-label" style="color:black">
+                            <b> @Model.title:</b>
+                        </div>
+                        <div class="col-md-7">
+                            @Html.EditorFor(model => model.title, new { htmlAttributes = new { @class = "form-control" } })
+                        </div>
+                    </div>
+                    <div class="tab-pane"  role="tabpanel" id="output">
+                        <div class="col-md-5 control-label" style="color:black">
+                            <b> @Model.title:</b>
+                        </div>
+                        <div class="col-md-7">
+                            @Html.EditorFor(model => model.title, new { htmlAttributes = new { @class = "form-control" } })
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br />
+            <div>Details</div>
+            <br />
+            <div>
+                <table>
+                    <tr>
+
+                        <td>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default">INPUT</button>
+                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <span class="caret"></span>
+                                    <span class="sr-only">Toggle Dropdown</span>
+                                </button>
+                                <ul class="dropdown-menu scrollable-menu">
+                                    @foreach (var item in Model.Inps)
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" href="selectInput(this)">@item.Id</a>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default">PARAMETER</button>
+                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <span class="caret"></span>
+                                    <span class="sr-only">Toggle Dropdown</span>
+                                </button>
+                                <ul class="dropdown-menu scrollable-menu">
+                                    @foreach (var item in Model.Params)
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" href="selectInput(this)">@item.Id</a>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <style>
+        .scrollable-menu {
+            height: auto;
+            max-height: 200px;
+            overflow-x: hidden;
+        }
+    </style>
+}

@@ -1,0 +1,45 @@
+﻿@model Strides.Models.Operation
+@using (Html.BeginForm(null, null, FormMethod.Post, new { id = "SaveOperation" }))
+{
+    <div class="form-horizontal" style="padding-top: 1%;">
+        @* <table style="width:100%;"><tr><td><h4>@Session["MFRTitle"]</h4> </td><td style="text-align:right;"><h5 style="color:grey">VER: @Session["MFRRevision"]</h5></td></tr></table>*@
+
+        <div class="form-group">
+            <div id="" class="exTab3 col-md-12">
+                <ul class="nav nav-pills">
+                    <li class="active">
+                        <a href="#">INFO </a>
+                    </li>
+                </ul>
+                <div class="tab-content clearfix">
+                    <div class="tab-pane active tabPadding" id="1b">
+                        <div class="col-md-4 control-label" style="color:black">
+                            <b> @Html.DisplayFor(model => model.title) Name:</b>
+                            @Html.HiddenFor(model => model.title)
+                            @Html.HiddenFor(model => model.PLM_STAGE_ID)
+                        </div>
+                        <div class="col-md-8">
+                            @{
+                                if (Convert.ToBoolean(Session["ViewMode"]))
+                                {
+                                    @Html.TextBoxFor(model => model.Name, new { disabled = "disabled", style = "width:300px;", @class = "form-control toUpper" })
+                                }
+                                else
+                                {
+                                    @Html.TextBoxFor(model => model.Name, new { @class = "form-control toUpper", style = "width:300px;" })
+
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    if (!Convert.ToBoolean(Session["ViewMode"]))
+    {
+        <input type="button" class="btn btn-primary" value="Save" style="float:right" id="btnSubmit" />
+    }
+}
